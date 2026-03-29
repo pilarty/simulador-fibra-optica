@@ -1,7 +1,348 @@
 <!DOCTYPE html>
-<html>
-  <head><meta charset="UTF-8" /><title>VR Demo</title></head>
-  <body style="margin:0">
-    <script type="module" src="/main.js"></script>
-  </body>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador de Fibra Óptica</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;600;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #04080f;
+      --surface:  #080f1c;
+      --border:   #1a2a45;
+      --accent:   #00d4ff;
+      --accent2:  #ff6b00;
+      --text:     #c8dff0;
+      --dim:      #4a6a8a;
+      --glow:     0 0 24px rgba(0,212,255,0.35);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Fondo animado de fibra ── */
+    canvas#bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.45;
+    }
+
+    /* ── Layout ── */
+    .shell {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      padding: 32px;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+    }
+    .header .eyebrow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.2s;
+    }
+    .header h1 {
+      font-size: clamp(28px, 5vw, 52px);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -1px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.35s;
+    }
+    .header h1 span {
+      color: var(--accent);
+    }
+    .header .sub {
+      margin-top: 14px;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dim);
+      letter-spacing: 1px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.5s;
+    }
+
+    /* ── Cards grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
+      gap: 20px;
+      justify-content: center;
+      width: 100%;
+      max-width: 760px;
+    }
+
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 32px 28px 28px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .card:nth-child(1) { animation: fadeUp 0.55s ease forwards 0.55s; }
+    .card:nth-child(2) { animation: fadeUp 0.55s ease forwards 0.7s; }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,212,255,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    .card:hover::after { transform: scaleX(1); }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--glow);
+      transform: translateY(-4px);
+    }
+
+    .card.orange::before {
+      background: linear-gradient(135deg, rgba(255,107,0,0.05) 0%, transparent 60%);
+    }
+    .card.orange::after {
+      background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+    }
+    .card.orange:hover { border-color: var(--accent2); box-shadow: 0 0 24px rgba(255,107,0,0.3); }
+
+    .card-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .card.orange .card-tag { color: var(--accent2); }
+
+    .card-icon {
+      font-size: 36px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .card h2 {
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .card p {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.6;
+    }
+
+    .card-badge {
+      margin-top: 8px;
+      align-self: flex-start;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      color: var(--dim);
+    }
+    .card-badge.new {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0,212,255,0.06);
+    }
+    .card.orange .card-badge.new {
+      border-color: var(--accent2);
+      color: var(--accent2);
+      background: rgba(255,107,0,0.06);
+    }
+
+    .card-arrow {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      font-size: 18px;
+      color: var(--dim);
+      transition: color 0.2s, transform 0.2s;
+    }
+    .card:hover .card-arrow { color: var(--accent); transform: translateX(4px); }
+    .card.orange:hover .card-arrow { color: var(--accent2); }
+
+    /* ── Footer ── */
+    .footer {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease forwards 0.9s;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="shell">
+
+  <div class="header">
+    <div class="eyebrow">Curso I+M — Módulo 6</div>
+    <h1>Simulador de<br><span>Fibra Óptica</span></h1>
+    <div class="sub">Seleccioná el módulo de entrenamiento</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- Módulo 1: VR Demo existente -->
+    <a class="card" href="/vr.html">
+      <div class="card-tag">Módulo 01</div>
+      <div class="card-icon">🥽</div>
+      <h2>Exploración VR</h2>
+      <p>Entorno en primera persona con movimiento libre. Control de manos con teclado y mouse.</p>
+      <div class="card-badge">Disponible</div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <!-- Módulo 2: Instalación de conectores -->
+    <a class="card orange" href="/conectores.html">
+      <div class="card-tag">Módulo 02</div>
+      <div class="card-icon">🔌</div>
+      <h2>Instalación de Conectores SC/APC</h2>
+      <p>Simulación paso a paso del proceso completo de instalación. Herramientas, técnica y verificación.</p>
+      <div class="card-badge new">Nuevo</div>
+      <div class="card-arrow">→</div>
+    </a>
+
+  </div>
+
+  <div class="footer">FIBRA ÓPTICA · ENTRENAMIENTO TÉCNICO · v2.0</div>
+
+</div>
+
+<!-- Canvas animado de pulsos de luz (fibra óptica) -->
+<script>
+  const canvas = document.getElementById('bg')
+  const ctx = canvas.getContext('2d')
+
+  let W, H, fibers = []
+
+  function resize() {
+    W = canvas.width  = window.innerWidth
+    H = canvas.height = window.innerHeight
+    initFibers()
+  }
+
+  function initFibers() {
+    fibers = []
+    const count = Math.floor(W / 60)
+    for (let i = 0; i < count; i++) {
+      fibers.push(makeFiber())
+    }
+  }
+
+  function makeFiber() {
+    const x = Math.random() * W
+    const curve = (Math.random() - 0.5) * 120
+    const color = Math.random() > 0.5 ? '0,212,255' : '255,107,0'
+    return {
+      x, curve, color,
+      pulses: Array.from({ length: Math.ceil(Math.random() * 3) }, () => ({
+        t: Math.random(),
+        speed: 0.0008 + Math.random() * 0.0012,
+        alpha: 0.4 + Math.random() * 0.5,
+        len: 0.08 + Math.random() * 0.12
+      }))
+    }
+  }
+
+  function drawFiber(f) {
+    // Línea base tenue
+    ctx.beginPath()
+    ctx.moveTo(f.x, 0)
+    ctx.quadraticCurveTo(f.x + f.curve, H / 2, f.x, H)
+    ctx.strokeStyle = `rgba(${f.color},0.07)`
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    // Pulsos
+    for (const p of f.pulses) {
+      p.t += p.speed
+      if (p.t > 1) p.t -= 1
+
+      const tStart = Math.max(0, p.t - p.len)
+      const tEnd   = Math.min(1, p.t)
+
+      const grad = ctx.createLinearGradient(0, tStart * H, 0, tEnd * H)
+      grad.addColorStop(0, `rgba(${f.color},0)`)
+      grad.addColorStop(0.5, `rgba(${f.color},${p.alpha})`)
+      grad.addColorStop(1, `rgba(${f.color},0)`)
+
+      ctx.beginPath()
+      // sample puntos del segmento cuadrático
+      const steps = 20
+      for (let s = 0; s <= steps; s++) {
+        const tt = tStart + (tEnd - tStart) * (s / steps)
+        const bx = (1-tt)*(1-tt)*f.x + 2*(1-tt)*tt*(f.x+f.curve) + tt*tt*f.x
+        const by = tt * H
+        s === 0 ? ctx.moveTo(bx, by) : ctx.lineTo(bx, by)
+      }
+      ctx.strokeStyle = grad
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+    }
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H)
+    for (const f of fibers) drawFiber(f)
+    requestAnimationFrame(loop)
+  }
+
+  window.addEventListener('resize', resize)
+  resize()
+  loop()
+</script>
+
+</body>
 </html>

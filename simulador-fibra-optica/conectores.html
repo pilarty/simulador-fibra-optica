@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instalación de Conectores SC/APC</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #04080f;
+      --surface: #080f1c;
+      --border:  #1a2a45;
+      --accent:  #ff6b00;
+      --blue:    #00d4ff;
+      --green:   #00ff88;
+      --red:     #ff3355;
+      --text:    #c8dff0;
+      --dim:     #4a6a8a;
+      --accent2: #ff6b00;
+    }
+
+    body { margin: 0; background: var(--bg); font-family: 'Exo 2', sans-serif; overflow: hidden; }
+
+    /* ── CANVAS 3D ── */
+    #c { display: block; position: fixed; inset: 0; }
+
+    /* ── BOTÓN VOLVER ── */
+    #back-btn {
+      position: fixed; top: 16px; left: 16px; z-index: 100;
+      background: rgba(8,15,28,0.85); border: 1px solid var(--border);
+      color: var(--blue); font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; letter-spacing: 2px; padding: 8px 14px;
+      cursor: pointer; text-decoration: none; border-radius: 3px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #back-btn:hover { background: rgba(0,212,255,0.08); border-color: var(--blue); }
+
+    /* ── PANEL LATERAL DE PASOS ── */
+    #steps-panel {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 300px; z-index: 100;
+      background: rgba(4,8,15,0.92);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      backdrop-filter: blur(8px);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-header .eyebrow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 3px;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 6px;
+    }
+    .panel-header h2 {
+      font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--text);
+    }
+
+    .steps-list {
+      flex: 1; overflow-y: auto; padding: 12px 0;
+    }
+    .steps-list::-webkit-scrollbar { width: 3px; }
+    .steps-list::-webkit-scrollbar-track { background: transparent; }
+    .steps-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .step-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 20px;
+      border-left: 2px solid transparent;
+      transition: background 0.2s, border-color 0.2s;
+      cursor: default;
+    }
+    .step-item.done {
+      border-left-color: var(--green);
+      background: rgba(0,255,136,0.03);
+    }
+    .step-item.active {
+      border-left-color: var(--accent);
+      background: rgba(255,107,0,0.06);
+    }
+    .step-item.locked { opacity: 0.35; }
+
+    .step-num {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; color: var(--dim);
+      min-width: 22px; padding-top: 2px;
+    }
+    .step-item.done  .step-num { color: var(--green); }
+    .step-item.active .step-num { color: var(--accent); }
+
+    .step-info { flex: 1; }
+    .step-title {
+      font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px;
+    }
+    .step-item.active .step-title { color: var(--accent); }
+    .step-desc {
+      font-size: 11px; font-weight: 300; color: var(--dim); line-height: 1.5;
+    }
+
+    .step-check {
+      font-size: 14px; padding-top: 2px;
+      transition: opacity 0.3s;
+    }
+
+    /* ── HUD CENTRAL ── */
+    #hud {
+      position: fixed; bottom: 0; left: 0; right: 300px; z-index: 100;
+      pointer-events: none;
+    }
+
+    .hud-inner {
+      margin: 0 auto 28px;
+      max-width: 560px;
+      background: rgba(4,8,15,0.88);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px 24px;
+      backdrop-filter: blur(6px);
+      pointer-events: all;
+    }
+
+    .hud-step-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 3px;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 8px;
+    }
+
+    .hud-instruction {
+      font-size: 15px; font-weight: 600; color: var(--text);
+      line-height: 1.4; margin-bottom: 12px;
+    }
+
+    .hud-detail {
+      font-size: 12px; font-weight: 300; color: var(--dim); line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .hud-tip {
+      display: flex; gap: 8px; align-items: flex-start;
+      background: rgba(255,107,0,0.06); border: 1px solid rgba(255,107,0,0.2);
+      border-radius: 4px; padding: 10px 12px;
+      font-size: 11px; color: var(--text); line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .hud-tip .tip-icon { color: var(--accent); font-style: normal; flex-shrink: 0; }
+
+    .hud-actions { display: flex; gap: 10px; }
+
+    .btn {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 12px; font-weight: 600; letter-spacing: 1px;
+      padding: 10px 20px; border-radius: 4px;
+      cursor: pointer; border: none; transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+    }
+    .btn-primary:hover { background: #ff8533; transform: translateY(-1px); }
+    .btn-secondary {
+      background: transparent; color: var(--dim);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--dim); color: var(--text); }
+
+    /* ── FEEDBACK OVERLAY ── */
+    #feedback {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(4,8,15,0.85);
+      backdrop-filter: blur(4px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #feedback.visible { opacity: 1; pointer-events: all; }
+
+    .feedback-box {
+      background: var(--surface); border-radius: 8px;
+      padding: 40px 48px; text-align: center;
+      max-width: 420px;
+      border: 1px solid var(--border);
+      transform: scale(0.92);
+      transition: transform 0.3s;
+    }
+    #feedback.visible .feedback-box { transform: scale(1); }
+
+    .feedback-icon { font-size: 52px; margin-bottom: 16px; }
+    .feedback-title {
+      font-size: 22px; font-weight: 800; margin-bottom: 8px;
+    }
+    .feedback-title.ok  { color: var(--green); }
+    .feedback-title.err { color: var(--red); }
+    .feedback-msg {
+      font-size: 13px; font-weight: 300; color: var(--dim);
+      line-height: 1.6; margin-bottom: 24px;
+    }
+
+    /* ── PROGRESO ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0; right: 300px;
+      height: 3px; z-index: 101;
+      background: var(--border);
+    }
+    #progress-fill {
+      height: 100%; background: linear-gradient(90deg, var(--accent), #ff9933);
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+
+    /* ── COMPLETADO ── */
+    #complete-screen {
+      position: fixed; inset: 0; z-index: 300;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.6s;
+    }
+    #complete-screen.visible { opacity: 1; pointer-events: all; }
+    .complete-glow {
+      font-size: 72px;
+      filter: drop-shadow(0 0 20px var(--green));
+    }
+    .complete-title {
+      font-size: 36px; font-weight: 800;
+      color: var(--green);
+      letter-spacing: -1px;
+    }
+    .complete-sub {
+      font-size: 14px; font-weight: 300; color: var(--dim);
+      text-align: center; line-height: 1.7; max-width: 400px;
+    }
+    .complete-actions { display: flex; gap: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<a id="back-btn" href="/index.html">← MENÚ</a>
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<!-- Panel de pasos -->
+<div id="steps-panel">
+  <div class="panel-header">
+    <div class="eyebrow">SC/APC · Conector Verde</div>
+    <h2>Instalación Paso a Paso</h2>
+  </div>
+  <div class="steps-list" id="steps-list"></div>
+</div>
+
+<!-- HUD instrucciones -->
+<div id="hud">
+  <div class="hud-inner">
+    <div class="hud-step-label" id="hud-label">PASO 1 DE 8</div>
+    <div class="hud-instruction" id="hud-instruction">—</div>
+    <div class="hud-detail" id="hud-detail">—</div>
+    <div class="hud-tip" id="hud-tip">
+      <i class="tip-icon">💡</i>
+      <span id="hud-tip-text">—</span>
+    </div>
+    <div class="hud-actions">
+      <button class="btn btn-primary" id="btn-next">Acercá tu mano a la herramienta...</button>
+      <button class="btn btn-secondary" id="btn-repeat">↺ Ver de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<!-- HUD de controles -->
+<div style="position: fixed; top: 80px; left: 16px; z-index: 100; background: rgba(4,8,15,0.88); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; backdrop-filter: blur(6px); font-family: 'Share Tech Mono', monospace; font-size: 10px; line-height: 1.8; color: var(--dim);">
+  <div style="color: var(--blue); font-weight: bold; margin-bottom: 6px; letter-spacing: 2px;">CONTROLES</div>
+  <div><span style="color: var(--accent);">CLICK</span> → Bloquear mouse</div>
+  <div><span style="color: var(--accent);">MOUSE</span> → Mirar</div>
+  <div><span style="color: var(--green);">WASD</span> → Mano izq. (Shift/Ctrl arriba/abajo)</div>
+  <div><span style="color: var(--accent2);">FLECHAS</span> → Mano der. (PgUp/PgDn arriba/abajo)</div>
+  <div><span style="color: var(--text); font-weight: bold;">E o ESPACIO</span> → Interactuar</div>
+</div>
+
+<!-- Feedback overlay -->
+<div id="feedback">
+  <div class="feedback-box">
+    <div class="feedback-icon" id="fb-icon">✅</div>
+    <div class="feedback-title" id="fb-title">¡Correcto!</div>
+    <div class="feedback-msg" id="fb-msg">Paso completado correctamente.</div>
+    <button class="btn btn-primary" id="fb-btn">Continuar →</button>
+  </div>
+</div>
+
+<!-- Pantalla de completado -->
+<div id="complete-screen">
+  <div class="complete-glow">🏆</div>
+  <div class="complete-title">¡Proceso Completado!</div>
+  <div class="complete-sub">
+    Instalaste correctamente un conector <strong>SC/APC</strong> (verde, 8°).<br>
+    El enlace está listo para ser certificado con OTDR o medidor de potencia.
+  </div>
+  <div class="complete-actions">
+    <button class="btn btn-primary" onclick="restartSim()">↺ Repetir</button>
+    <a class="btn btn-secondary" href="/index.html">← Menú</a>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three'
+
+// ─────────────────────────────────────────────
+// DATOS DEL SIMULADOR
+// ─────────────────────────────────────────────
+const STEPS = [
+  {
+    id: 0,
+    title: 'Preparar el cable',
+    desc: 'Retirar protección exterior',
+    instruction: 'Retirar la cubierta exterior del cable drop',
+    detail: 'Usando el pelacables, retirar 4 cm de cubierta exterior del cable FTTH (drop). Exponer el buffer de 900µm o el hilo de fibra con cubierta de 250µm. No dañar el kevlar.',
+    tip: 'Siempre pelá en dirección contraria al cuerpo. El kevlar (fibra amarilla) podés cortarlo con tijera.',
+    tool: 'pelacables',
+    color: 0x00d4ff,
+    feedbackOk: '¡Cubierta retirada correctamente! Se expusieron 4 cm de buffer sin daños.',
+    feedbackErr: 'Cuidado: pelaste demasiado rápido y podrías haber dañado el buffer interno.'
+  },
+  {
+    id: 1,
+    title: 'Limpiar con alcohol',
+    desc: 'Desengrase de la fibra',
+    instruction: 'Limpiar la fibra con alcohol isopropílico 99%',
+    detail: 'Humedecer una toallita sin pelusa con alcohol isopropílico al 99% y limpiar el tramo de fibra pelada con un movimiento en una sola dirección (no vaivén). Esperar 5 segundos a que seque.',
+    tip: 'Nunca reutilices la misma sección de toallita. La suciedad (aceites, polvo) arruina el empalme.',
+    tool: 'alcohol',
+    color: 0x88eeff,
+    feedbackOk: '¡Fibra limpia! Sin residuos ni grasas. Lista para el pelado fino.',
+    feedbackErr: 'La fibra quedó con residuos. Un movimiento de vaivén redeposita la suciedad.'
+  },
+  {
+    id: 2,
+    title: 'Pelar el buffer',
+    desc: 'Exponer la fibra desnuda 125µm',
+    instruction: 'Pelar el buffer de 250µm para exponer la fibra desnuda',
+    detail: 'Usar el pelador de precisión (Miller) calibrado para 250µm. Retirar exactamente 3 cm de buffer. La fibra desnuda debe ser transparente, sin marcas ni rallones. Diámetro: 125µm.',
+    tip: 'Si la fibra aparece opaca o blancuzca, tiene micro-roturas. Descartala y volvé a pelar desde atrás.',
+    tool: 'miller',
+    color: 0xffffff,
+    feedbackOk: 'Fibra desnuda de 125µm expuesta sin defectos. Transparente y uniforme.',
+    feedbackErr: 'Se detectaron marcas en la fibra. El pelador puede estar desajustado o sucio.'
+  },
+  {
+    id: 3,
+    title: 'Limpiar de nuevo',
+    desc: 'Segunda limpieza post-pelado',
+    instruction: 'Segunda limpieza con alcohol sobre la fibra desnuda',
+    detail: 'Repetir la limpieza con alcohol sobre la fibra desnuda de 125µm. Esta vez con mucho más cuidado: la fibra desnuda es extremadamente frágil. Un movimiento en una sola dirección.',
+    tip: 'En este punto la fibra puede romperse con 500g de fuerza lateral. Tratala como si fuera un cabello de vidrio.',
+    tool: 'alcohol',
+    color: 0x88eeff,
+    feedbackOk: '¡Excelente! Fibra desnuda limpia y lista para el clivado.',
+    feedbackErr: 'Movimiento incorrecto. Sobre fibra desnuda siempre en una sola dirección.'
+  },
+  {
+    id: 4,
+    title: 'Clivar la fibra',
+    desc: 'Corte perpendicular con clivador',
+    instruction: 'Cortar la fibra con el clivador a 90°',
+    detail: 'Colocar la fibra en el clivador a la marca de 1.5 cm (para conector SC). Cerrar la tapa suavemente, el clivador hace el corte automáticamente. El ángulo debe ser < 0.5° respecto a la perpendicular.',
+    tip: 'Nunca soplés la fibra cortada. Los residuos de fibra de vidrio son invisibles y peligrosos. Depositá el fragmento en el contenedor de desechos.',
+    tool: 'clivador',
+    color: 0xffaa00,
+    feedbackOk: '¡Corte perfecto! Cara plana a 0.2°. Apta para inserción en el conector.',
+    feedbackErr: 'Corte oblicuo detectado (> 1°). Generará reflexión y pérdida de inserción. Repetir.'
+  },
+  {
+    id: 5,
+    title: 'Insertar en el conector',
+    desc: 'Fibra dentro del ferrule SC/APC',
+    instruction: 'Insertar la fibra desnuda en el conector SC/APC (verde)',
+    detail: 'Alinear la fibra con el ferrule de zirconia del conector SC/APC. Insertar con movimiento recto y firme hasta sentir que toca el fondo. La fibra debe sobresalir levemente por la cara del ferrule.',
+    tip: 'El conector SC/APC es VERDE (8° de ángulo). No confundir con SC/UPC que es AZUL (cara plana). ¡Son incompatibles!',
+    tool: 'conector',
+    color: 0x00cc55,
+    feedbackOk: '¡Insertado! La fibra llegó al fondo del ferrule. Se ve sobresalir 0.1mm.',
+    feedbackErr: 'La fibra no llegó al fondo. Reintentar con movimiento más firme y recto.'
+  },
+  {
+    id: 6,
+    title: 'Fijar el conector',
+    desc: 'Cerrar y asegurar el cuerpo',
+    instruction: 'Cerrar la pestaña de retención y deslizar el seguro del conector',
+    detail: 'Cerrar el crimp del cuerpo del conector sobre el buffer/cubierta. Deslizar el seguro azul (boot) hasta que encaje. En conectores de campo con adhesivo, aplicar el activador y esperar 60 segundos.',
+    tip: 'El crimp debe sujetar el cable, no la fibra desnuda. Si el cable se mueve al tirar suavemente, el crimp está mal posicionado.',
+    tool: 'crimp',
+    color: 0x4488ff,
+    feedbackOk: 'Conector fijado correctamente. El cable no se mueve bajo tracción suave.',
+    feedbackErr: 'El crimp quedó posicionado sobre la fibra desnuda. Rehacer.'
+  },
+  {
+    id: 7,
+    title: 'Inspeccionar la cara',
+    desc: 'Video-inspector o microscopio 200x',
+    instruction: 'Verificar la cara del ferrule con video-inspector',
+    detail: 'Conectar el video-inspector al adaptador SC. La cara del ferrule debe verse sin: rayaduras en el núcleo (zona central 9µm), polvo, fracturas o chips. Evaluar según IEC 61300-3-35.',
+    tip: 'Zona A (núcleo 0-25µm): CERO defectos tolerados. Zona B (25-120µm): mínimos. Si la cara está sucia, limpiar con lapicera limpiadora y re-inspeccionar.',
+    tool: 'inspector',
+    color: 0xff6b00,
+    feedbackOk: '¡Cara aprobada! Zona A sin defectos. Pérdida de inserción estimada: < 0.3 dB.',
+    feedbackErr: 'Rasguño en zona A del núcleo. Limpiar la cara con lapicera y re-inspeccionar antes de instalar.'
+  }
+]
+
+// ─────────────────────────────────────────────
+// THREE.JS — Escena 3D
+// ─────────────────────────────────────────────
+const canvas = document.getElementById('c')
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.shadowMap.enabled = true
+
+const scene = new THREE.Scene()
+
+// Cielo fotorrealista con gradiente
+const skyColor = new THREE.Color(0x87CEEB)
+scene.background = skyColor
+scene.fog = new THREE.Fog(0xb8d4e8, 30, 100)
+
+// Agregar nubes realistas con geometría
+const cloudGroup = new THREE.Group()
+function createCloud(x, y, z, scale = 1) {
+  const cloud = new THREE.Group()
+  const cloudMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.8,
+    roughness: 1,
+    metalness: 0
+  })
+
+  // Múltiples esferas para forma orgánica de nube
+  const positions = [
+    [0, 0, 0, 1],
+    [0.8, 0.2, 0.3, 0.9],
+    [-0.7, 0.1, -0.2, 0.85],
+    [0.3, 0.5, 0.1, 0.7],
+    [-0.4, -0.2, 0.4, 0.75]
+  ]
+
+  positions.forEach(([px, py, pz, s]) => {
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(s * scale, 12, 12),
+      cloudMat
+    )
+    sphere.position.set(px * scale, py * scale, pz * scale)
+    cloud.add(sphere)
+  })
+
+  cloud.position.set(x, y, z)
+  return cloud
+}
+
+// Añadir varias nubes en el cielo
+cloudGroup.add(createCloud(-20, 15, -40, 3))
+cloudGroup.add(createCloud(25, 18, -50, 4))
+cloudGroup.add(createCloud(-10, 20, -60, 3.5))
+cloudGroup.add(createCloud(15, 16, -45, 2.5))
+cloudGroup.add(createCloud(0, 22, -70, 5))
+scene.add(cloudGroup)
+
+// Sistema de primera persona
+const camera = new THREE.PerspectiveCamera(70, 1, 0.01, 100)
+scene.add(camera)
+
+// Estado del jugador
+const playerGroup = new THREE.Group()
+playerGroup.position.set(0, 1.6, 2.5) // Posición frente a la mesa
+scene.add(playerGroup)
+
+// Rotación de cámara
+let yaw = 0
+let pitch = 0
+
+// Grupos de manos pegados a la cámara
+const leftHandGroup = new THREE.Group()
+const rightHandGroup = new THREE.Group()
+camera.add(leftHandGroup)
+camera.add(rightHandGroup)
+
+leftHandGroup.position.set(-0.15, -0.25, -0.6)
+rightHandGroup.position.set(0.15, -0.25, -0.6)
+
+// Iluminación fotorrealista
+scene.add(new THREE.AmbientLight(0xffffff, 0.5))
+
+// Sol principal con sombras suaves
+const sunLight = new THREE.DirectionalLight(0xfffaeb, 2.5)
+sunLight.position.set(20, 30, 15)
+sunLight.castShadow = true
+sunLight.shadow.mapSize.width = 4096
+sunLight.shadow.mapSize.height = 4096
+sunLight.shadow.camera.left = -15
+sunLight.shadow.camera.right = 15
+sunLight.shadow.camera.top = 15
+sunLight.shadow.camera.bottom = -15
+sunLight.shadow.camera.near = 0.5
+sunLight.shadow.camera.far = 100
+sunLight.shadow.bias = -0.0001
+sunLight.shadow.radius = 2 // Sombras suaves
+scene.add(sunLight)
+
+// Luz hemisférica para simular cielo real
+const skyLight = new THREE.HemisphereLight(0x87CEEB, 0xd4d4d4, 0.8)
+scene.add(skyLight)
+
+// Luz de relleno sutil
+const fillLight = new THREE.PointLight(0xffffff, 0.4, 15)
+fillLight.position.set(-5, 3, 5)
+scene.add(fillLight)
+
+// Luz de acento para herramientas
+const accentLight = new THREE.PointLight(0xff6b00, 0.0, 6)
+accentLight.position.set(0, 1, 2)
+scene.add(accentLight)
+
+// ── Entorno fotorrealista: Terraza de edificio ──
+
+// Piso de concreto con textura procedural
+const floorGeom = new THREE.PlaneGeometry(20, 20, 50, 50)
+const floorMat = new THREE.MeshStandardMaterial({
+  color: 0xc8c8c0,
+  roughness: 0.95,
+  metalness: 0.05
+})
+
+// Añadir variación de altura al piso para simular imperfecciones
+const posAttr = floorGeom.attributes.position
+for (let i = 0; i < posAttr.count; i++) {
+  posAttr.setZ(i, Math.random() * 0.01)
+}
+posAttr.needsUpdate = true
+floorGeom.computeVertexNormals()
+
+const floor = new THREE.Mesh(floorGeom, floorMat)
+floor.rotation.x = -Math.PI / 2
+floor.receiveShadow = true
+scene.add(floor)
+
+// Juntas de dilatación en el piso
+for (let i = -2; i <= 2; i++) {
+  const junta1 = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 0.03),
+    new THREE.MeshBasicMaterial({ color: 0x808080 })
+  )
+  junta1.rotation.x = -Math.PI / 2
+  junta1.position.set(0, 0.002, i * 4)
+  scene.add(junta1)
+
+  const junta2 = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.03, 20),
+    new THREE.MeshBasicMaterial({ color: 0x808080 })
+  )
+  junta2.rotation.x = -Math.PI / 2
+  junta2.position.set(i * 4, 0.002, 0)
+  scene.add(junta2)
+}
+
+// Paredes con textura de estuco
+const wallMat = new THREE.MeshStandardMaterial({
+  color: 0xf5f5eb,
+  roughness: 0.85,
+  metalness: 0.0
+})
+
+const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3, 20), wallMat)
+leftWall.position.set(-10, 1.5, 0)
+leftWall.castShadow = true
+leftWall.receiveShadow = true
+scene.add(leftWall)
+
+const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3, 20), wallMat)
+rightWall.position.set(10, 1.5, 0)
+rightWall.castShadow = true
+rightWall.receiveShadow = true
+scene.add(rightWall)
+
+const backWall = new THREE.Mesh(new THREE.BoxGeometry(20, 3, 0.25), wallMat)
+backWall.position.set(0, 1.5, -10)
+backWall.castShadow = true
+backWall.receiveShadow = true
+scene.add(backWall)
+
+// Cornisa en la parte superior de las paredes
+const cornisaMat = new THREE.MeshStandardMaterial({ color: 0xe0e0d8, roughness: 0.7 })
+const cornisa1 = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.2, 20), cornisaMat)
+cornisa1.position.set(-10, 3, 0)
+scene.add(cornisa1)
+
+const cornisa2 = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.2, 20), cornisaMat)
+cornisa2.position.set(10, 3, 0)
+scene.add(cornisa2)
+
+// Barandas de seguridad con vidrio
+const railingMat = new THREE.MeshStandardMaterial({
+  color: 0x303030,
+  metalness: 0.9,
+  roughness: 0.2
+})
+
+// Postes verticales
+for (let i = -8; i <= 8; i += 2) {
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 1.2, 16), railingMat)
+  post.position.set(i, 0.6, 9.5)
+  post.castShadow = true
+  scene.add(post)
+}
+
+// Barras horizontales
+const topRail = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 17, 16), railingMat)
+topRail.rotation.z = Math.PI / 2
+topRail.position.set(0, 1.15, 9.5)
+topRail.castShadow = true
+scene.add(topRail)
+
+const midRail = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 17, 16), railingMat)
+midRail.rotation.z = Math.PI / 2
+midRail.position.set(0, 0.6, 9.5)
+scene.add(midRail)
+
+// Paneles de vidrio
+const glassMat = new THREE.MeshPhysicalMaterial({
+  color: 0xffffff,
+  transparent: true,
+  opacity: 0.25,
+  roughness: 0.05,
+  metalness: 0.0,
+  transmission: 0.9,
+  thickness: 0.5
+})
+
+for (let i = -7; i <= 7; i += 2) {
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.9), glassMat)
+  glass.position.set(i + 1, 0.85, 9.5)
+  scene.add(glass)
+}
+
+// Mesa de trabajo de madera realista
+const woodMat = new THREE.MeshStandardMaterial({
+  color: 0x8b6f47,
+  roughness: 0.6,
+  metalness: 0.0
+})
+
+const tableTop = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.06, 1.2), woodMat)
+tableTop.position.set(0, 0.77, 0)
+tableTop.castShadow = true
+tableTop.receiveShadow = true
+scene.add(tableTop)
+
+// Borde de la mesa
+const edgeMat = new THREE.MeshStandardMaterial({ color: 0x6b5437, roughness: 0.7 })
+const edges = [
+  new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.04, 0.04), edgeMat),
+  new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.04, 0.04), edgeMat),
+  new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 1.2), edgeMat),
+  new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 1.2), edgeMat)
+]
+edges[0].position.set(0, 0.75, 0.62)
+edges[1].position.set(0, 0.75, -0.62)
+edges[2].position.set(1.12, 0.75, 0)
+edges[3].position.set(-1.12, 0.75, 0)
+edges.forEach(e => scene.add(e))
+
+// Patas metálicas tubulares
+const legMat = new THREE.MeshStandardMaterial({
+  color: 0x2a2a2a,
+  metalness: 0.8,
+  roughness: 0.3
+})
+
+const legPositions = [[-0.95, -0.55], [0.95, -0.55], [-0.95, 0.55], [0.95, 0.55]]
+legPositions.forEach(([x, z]) => {
+  const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.77, 16), legMat)
+  leg.position.set(x, 0.385, z)
+  leg.castShadow = true
+  scene.add(leg)
+
+  // Base de goma
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.015, 12), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 }))
+  foot.position.set(x, 0.008, z)
+  scene.add(foot)
+})
+
+// ── Antena de telecomunicaciones realista ──
+const antennaGroup = new THREE.Group()
+antennaGroup.position.set(6, 0, -7)
+
+// Plataforma base de concreto
+const platformMat = new THREE.MeshStandardMaterial({ color: 0xa8a8a0, roughness: 0.9 })
+const platform = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.3, 24), platformMat)
+platform.position.y = 0.15
+platform.castShadow = true
+platform.receiveShadow = true
+antennaGroup.add(platform)
+
+// Pernos de anclaje
+const boltMat = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, metalness: 0.8, roughness: 0.3 })
+for (let i = 0; i < 8; i++) {
+  const angle = (i / 8) * Math.PI * 2
+  const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.05, 8), boltMat)
+  bolt.position.set(Math.cos(angle) * 0.5, 0.32, Math.sin(angle) * 0.5)
+  antennaGroup.add(bolt)
+}
+
+// Poste principal galvanizado
+const poleMat = new THREE.MeshStandardMaterial({
+  color: 0xd4d4d4,
+  metalness: 0.9,
+  roughness: 0.25
+})
+
+// Secciones del poste con juntas
+const poleHeights = [0, 1.5, 3, 4.5]
+poleHeights.forEach((h, i) => {
+  const poleSection = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.09, 0.1, 1.4, 20),
+    poleMat
+  )
+  poleSection.position.y = h + 1
+  poleSection.castShadow = true
+  antennaGroup.add(poleSection)
+
+  // Junta entre secciones
+  if (i < poleHeights.length - 1) {
+    const joint = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.11, 0.11, 0.1, 20),
+      new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7, roughness: 0.4 })
+    )
+    joint.position.y = h + 1.7
+    antennaGroup.add(joint)
+  }
+})
+
+// Plataforma superior para equipos
+const topPlatform = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.4, 0.35, 0.08, 24),
+  new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.6, roughness: 0.4 })
+)
+topPlatform.position.y = 6
+topPlatform.castShadow = true
+antennaGroup.add(topPlatform)
+
+// Antena parabólica principal
+const dishMat = new THREE.MeshStandardMaterial({
+  color: 0xf8f8f8,
+  metalness: 0.7,
+  roughness: 0.15
+})
+
+// Plato parabólico
+const dishGeom = new THREE.SphereGeometry(0.9, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2)
+const dish = new THREE.Mesh(dishGeom, dishMat)
+dish.position.set(0, 6.5, 0)
+dish.rotation.x = Math.PI / 6
+dish.castShadow = true
+antennaGroup.add(dish)
+
+// Borde del plato
+const rimGeom = new THREE.TorusGeometry(0.9, 0.04, 16, 64, Math.PI * 2)
+const rim = new THREE.Mesh(rimGeom, poleMat)
+rim.position.set(0, 6.5, 0)
+rim.rotation.x = Math.PI / 2 + Math.PI / 6
+antennaGroup.add(rim)
+
+// Brazo soporte del LNB
+const armGeom = new THREE.CylinderGeometry(0.025, 0.025, 0.8, 12)
+const arm = new THREE.Mesh(armGeom, poleMat)
+arm.position.set(0, 6.5, 0.4)
+arm.rotation.x = -Math.PI / 6
+arm.castShadow = true
+antennaGroup.add(arm)
+
+// LNB (Low Noise Block) - receptor
+const lnbBody = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.06, 0.05, 0.15, 16),
+  new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.5, roughness: 0.3 })
+)
+lnbBody.position.set(0, 6.5, 0.7)
+lnbBody.rotation.x = -Math.PI / 6
+antennaGroup.add(lnbBody)
+
+// Guía de ondas del LNB
+const waveguide = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.04, 0.04, 0.08, 16),
+  new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.2 })
+)
+waveguide.position.set(0, 6.4, 0.79)
+waveguide.rotation.x = -Math.PI / 6
+antennaGroup.add(waveguide)
+
+// Antenas laterales (omnidireccionales)
+for (let i = 0; i < 3; i++) {
+  const antennaBracket = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.06, 0.3),
+    new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.6, roughness: 0.4 })
+  )
+  antennaBracket.position.set(Math.cos(i * 2) * 0.25, 4 + i * 0.5, Math.sin(i * 2) * 0.25)
+  antennaBracket.rotation.y = i * 2
+  antennaGroup.add(antennaBracket)
+
+  const omniAntenna = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.015, 0.015, 0.6, 12),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.7, roughness: 0.2 })
+  )
+  omniAntenna.position.set(Math.cos(i * 2) * 0.4, 4 + i * 0.5, Math.sin(i * 2) * 0.4)
+  omniAntenna.castShadow = true
+  antennaGroup.add(omniAntenna)
+}
+
+// Cables y conductos
+const cableMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7 })
+for (let i = 0; i < 4; i++) {
+  const cable = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.015, 0.015, 6, 8),
+    cableMat
+  )
+  const angle = (i / 4) * Math.PI * 2
+  cable.position.set(Math.cos(angle) * 0.08, 3, Math.sin(angle) * 0.08)
+  cable.castShadow = true
+  antennaGroup.add(cable)
+}
+
+// Caja de equipos
+const equipBox = new THREE.Mesh(
+  new THREE.BoxGeometry(0.3, 0.4, 0.2),
+  new THREE.MeshStandardMaterial({ color: 0xc8c8c8, metalness: 0.3, roughness: 0.6 })
+)
+equipBox.position.set(-0.4, 2, 0)
+equipBox.castShadow = true
+antennaGroup.add(equipBox)
+
+// Etiquetas de advertencia
+const warningMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 })
+const warning = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.15), warningMat)
+warning.position.set(-0.4, 2, 0.11)
+antennaGroup.add(warning)
+
+scene.add(antennaGroup)
+
+// ── Herramientas y objetos 3D ──
+
+// Cable de fibra (cilindro horizontal en el centro de la mesa)
+const fiberCableMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f0, roughness: 0.6 })
+const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.5, 12), fiberCableMat)
+cable.rotation.z = Math.PI / 2
+cable.position.set(0, 0.8, 0)
+cable.castShadow = true
+scene.add(cable)
+
+// Fibra desnuda (parte interna, empieza oculta)
+const fiberMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0, roughness: 0.3 })
+const fiber = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.4, 8), fiberMat)
+fiber.rotation.z = Math.PI / 2
+fiber.position.set(0.6, 0.76, 0)
+scene.add(fiber)
+
+// Array de herramientas interactuables
+const tools = []
+
+// Función para crear herramienta
+function createTool(name, color, position, size = 0.15) {
+  const geom = new THREE.BoxGeometry(size, size * 0.6, size)
+  const mat = new THREE.MeshStandardMaterial({
+    color: color,
+    roughness: 0.4,
+    metalness: 0.3
+  })
+  const mesh = new THREE.Mesh(geom, mat)
+  mesh.position.copy(position)
+  mesh.castShadow = true
+  mesh.receiveShadow = true
+  mesh.userData.toolName = name
+  mesh.userData.interactable = false // Solo activa para el paso correcto
+  scene.add(mesh)
+
+  // Outline para indicar interactividad
+  const outlineGeom = new THREE.BoxGeometry(size * 1.15, size * 0.7, size * 1.15)
+  const outlineMat = new THREE.MeshBasicMaterial({
+    color: 0x00ff88,
+    transparent: true,
+    opacity: 0,
+    side: THREE.BackSide
+  })
+  const outline = new THREE.Mesh(outlineGeom, outlineMat)
+  mesh.add(outline)
+  mesh.userData.outline = outline
+
+  tools.push(mesh)
+  return mesh
+}
+
+// Crear herramientas en la mesa (distribuidas)
+const pelacables = createTool('pelacables', 0x00d4ff, new THREE.Vector3(-0.6, 0.78, -0.3), 0.12)
+const alcoholBottle = createTool('alcohol', 0x88eeff, new THREE.Vector3(-0.3, 0.78, -0.3), 0.1)
+const miller = createTool('miller', 0xdddddd, new THREE.Vector3(0.0, 0.78, -0.3), 0.13)
+const clivador = createTool('clivador', 0xffaa00, new THREE.Vector3(0.3, 0.78, -0.3), 0.18)
+const connectorSCAPC = createTool('conector', 0x00cc55, new THREE.Vector3(0.6, 0.78, -0.3), 0.12)
+const crimp = createTool('crimp', 0x4488ff, new THREE.Vector3(-0.6, 0.78, 0.3), 0.14)
+const inspector = createTool('inspector', 0xff6b00, new THREE.Vector3(-0.3, 0.78, 0.3), 0.15)
+
+// Mapa de herramientas por nombre
+const toolMap = {
+  'pelacables': pelacables,
+  'alcohol': alcoholBottle,
+  'miller': miller,
+  'clivador': clivador,
+  'conector': connectorSCAPC,
+  'crimp': crimp,
+  'inspector': inspector
+}
+
+// ── Sistema de brazos org ánicos y realistas ──
+
+// Función auxiliar para crear cápsula orgánica (forma de músculo)
+function createCapsule(radiusTop, radiusBottom, height, segments = 16) {
+  const geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments)
+
+  // Redondear los extremos para aspecto orgánico
+  const positions = geometry.attributes.position.array
+  for (let i = 0; i < positions.length; i += 3) {
+    const y = positions[i + 1]
+    if (Math.abs(y) > height * 0.35) {
+      const factor = 1 - (Math.abs(y) - height * 0.35) / (height * 0.15)
+      positions[i] *= Math.pow(factor, 0.6)
+      positions[i + 2] *= Math.pow(factor, 0.6)
+    }
+  }
+
+  geometry.attributes.position.needsUpdate = true
+  geometry.computeVertexNormals()
+  return geometry
+}
+
+// Función para crear brazo realista con articulaciones y anatomía correcta
+function createRealisticArm(isLeft) {
+  const armGroup = new THREE.Group()
+  const side = isLeft ? 1 : -1
+
+  // Materiales realistas con subsurface scattering simulado
+  const skinMat = new THREE.MeshStandardMaterial({
+    color: 0xffd5b4,
+    roughness: 0.65,
+    metalness: 0.0
+  })
+
+  const shirtMat = new THREE.MeshStandardMaterial({
+    color: isLeft ? 0x4a8dc9 : 0x3a6fa4,
+    roughness: 0.85,
+    metalness: 0.0
+  })
+
+  // BRAZO SUPERIOR (bíceps y tríceps)
+  const upperArmGroup = new THREE.Group()
+
+  // Hombro (manga de camisa)
+  const shoulder = new THREE.Mesh(
+    new THREE.SphereGeometry(0.055, 16, 16),
+    shirtMat
+  )
+  shoulder.scale.set(1, 0.8, 1.1)
+  shoulder.position.set(side * 0.02, 0.15, -0.05)
+  shoulder.castShadow = true
+  upperArmGroup.add(shoulder)
+
+  // Brazo superior con forma de músculo (bíceps)
+  const biceps = new THREE.Mesh(
+    createCapsule(0.042, 0.037, 0.24, 20),
+    shirtMat
+  )
+  biceps.position.set(side * 0.01, 0.03, -0.12)
+  biceps.rotation.x = 0.1
+  biceps.castShadow = true
+  upperArmGroup.add(biceps)
+
+  armGroup.add(upperArmGroup)
+
+  // ARTICULACIÓN DEL CODO
+  const elbowJoint = new THREE.Group()
+  elbowJoint.position.set(0, -0.09, -0.23)
+
+  // Codo visible (terminación de manga + inicio de antebrazo)
+  const elbow = new THREE.Mesh(
+    new THREE.SphereGeometry(0.032, 16, 16),
+    skinMat
+  )
+  elbow.scale.set(0.9, 1, 1.1)
+  elbow.castShadow = true
+  elbowJoint.add(elbow)
+
+  // Detalle del pliegue del codo
+  const elbowCrease = new THREE.Mesh(
+    new THREE.TorusGeometry(0.028, 0.005, 8, 16, Math.PI),
+    new THREE.MeshStandardMaterial({ color: 0xffcba0, roughness: 0.75 })
+  )
+  elbowCrease.rotation.x = Math.PI / 2
+  elbowJoint.add(elbowCrease)
+
+  upperArmGroup.add(elbowJoint)
+
+  // ANTEBRAZO (forearm con músculos extensor y flexor)
+  const forearmGroup = new THREE.Group()
+  forearmGroup.position.set(0, -0.09, -0.23)
+
+  // Músculo extensor (parte superior del antebrazo)
+  const forearm = new THREE.Mesh(
+    createCapsule(0.033, 0.027, 0.22, 20),
+    skinMat
+  )
+  forearm.position.set(0, -0.11, -0.01)
+  forearm.rotation.x = -0.05
+  forearm.castShadow = true
+  forearmGroup.add(forearm)
+
+  // Detalle de venas y tendones
+  const veinGeo = new THREE.CylinderGeometry(0.002, 0.0018, 0.15, 8)
+  const veinMat = new THREE.MeshStandardMaterial({ color: 0x88b8d0, roughness: 0.7, transparent: true, opacity: 0.3 })
+
+  const vein1 = new THREE.Mesh(veinGeo, veinMat)
+  vein1.position.set(0.015, -0.08, -0.02)
+  vein1.rotation.z = -0.1
+  forearmGroup.add(vein1)
+
+  const vein2 = new THREE.Mesh(veinGeo, veinMat)
+  vein2.position.set(-0.012, -0.09, 0)
+  vein2.rotation.z = 0.08
+  forearmGroup.add(vein2)
+
+  upperArmGroup.add(forearmGroup)
+
+  // ARTICULACIÓN DE LA MUÑECA
+  const wristGroup = new THREE.Group()
+  wristGroup.position.set(0, -0.33, -0.01)
+
+  const wrist = new THREE.Mesh(
+    new THREE.SphereGeometry(0.024, 16, 16),
+    skinMat
+  )
+  wrist.scale.set(1.2, 0.8, 1)
+  wrist.castShadow = true
+  wristGroup.add(wrist)
+
+  // Huesos de la muñeca (prominencias)
+  const wristBone1 = new THREE.Mesh(
+    new THREE.SphereGeometry(0.008, 8, 8),
+    new THREE.MeshStandardMaterial({ color: 0xffc8a0, roughness: 0.6 })
+  )
+  wristBone1.position.set(side * 0.018, 0, 0.012)
+  wristGroup.add(wristBone1)
+
+  const wristBone2 = new THREE.Mesh(
+    new THREE.SphereGeometry(0.007, 8, 8),
+    new THREE.MeshStandardMaterial({ color: 0xffc8a0, roughness: 0.6 })
+  )
+  wristBone2.position.set(side * -0.015, 0, 0.01)
+  wristGroup.add(wristBone2)
+
+  forearmGroup.add(wristGroup)
+
+  // MANO REALISTA CON ANATOMÍA DETALLADA
+  const handGroup = new THREE.Group()
+  handGroup.position.set(0, -0.04, -0.02)
+
+  // Palma con forma anatómica (no rectangular)
+  const palmGeo = new THREE.BoxGeometry(0.07, 0.085, 0.024)
+  const palmPositions = palmGeo.attributes.position.array
+
+  // Deformar para dar forma orgánica a la palma
+  for (let i = 0; i < palmPositions.length; i += 3) {
+    const x = palmPositions[i]
+    const y = palmPositions[i + 1]
+    const z = palmPositions[i + 2]
+
+    // Curvar la palma
+    if (y < 0) {
+      palmPositions[i + 2] -= Math.abs(y) * 0.15
+      palmPositions[i] *= 1 + Math.abs(y) * 0.08
+    }
+  }
+  palmGeo.attributes.position.needsUpdate = true
+  palmGeo.computeVertexNormals()
+
+  const palm = new THREE.Mesh(palmGeo, skinMat)
+  palm.position.set(0, -0.04, -0.01)
+  palm.rotation.x = -0.15
+  palm.castShadow = true
+  handGroup.add(palm)
+
+  // Metacarpianos (nudillos base)
+  const knuckleMat = new THREE.MeshStandardMaterial({ color: 0xffcaa0, roughness: 0.65 })
+  for (let i = 0; i < 4; i++) {
+    const knuckle = new THREE.Mesh(
+      new THREE.SphereGeometry(0.006, 10, 10),
+      knuckleMat
+    )
+    knuckle.position.set((i - 1.5) * 0.016, -0.08, -0.018)
+    knuckle.castShadow = true
+    handGroup.add(knuckle)
+  }
+
+  // DEDOS REALISTAS (5 dedos con 3 falanges cada uno)
+  const fingerData = [
+    { name: 'pulgar', offset: { x: side * -0.03, y: -0.03, z: -0.025 }, rotation: { x: 0.4, y: 0, z: side * 0.7 }, lengths: [0.024, 0.020] },
+    { name: 'indice', offset: { x: side * -0.024, y: -0.08, z: -0.015 }, rotation: { x: 0.1, y: 0, z: 0 }, lengths: [0.028, 0.022, 0.018] },
+    { name: 'medio', offset: { x: side * -0.008, y: -0.085, z: -0.018 }, rotation: { x: 0.08, y: 0, z: 0 }, lengths: [0.032, 0.026, 0.020] },
+    { name: 'anular', offset: { x: side * 0.008, y: -0.082, z: -0.017 }, rotation: { x: 0.1, y: 0, z: 0 }, lengths: [0.029, 0.023, 0.018] },
+    { name: 'menique', offset: { x: side * 0.024, y: -0.075, z: -0.015 }, rotation: { x: 0.15, y: 0, z: 0 }, lengths: [0.022, 0.018, 0.014] }
+  ]
+
+  fingerData.forEach((finger, idx) => {
+    const fingerGroup = new THREE.Group()
+    fingerGroup.position.set(finger.offset.x, finger.offset.y, finger.offset.z)
+    fingerGroup.rotation.set(finger.rotation.x, finger.rotation.y, finger.rotation.z)
+
+    let cumulativeY = 0
+
+    finger.lengths.forEach((length, segIdx) => {
+      // Falange
+      const radius = 0.0055 - segIdx * 0.0008
+      const phalanx = new THREE.Mesh(
+        createCapsule(radius, radius * 0.9, length, 12),
+        skinMat
+      )
+      phalanx.position.y = cumulativeY - length / 2
+      phalanx.castShadow = true
+      fingerGroup.add(phalanx)
+
+      // Articulación inter-falángica (nudillo)
+      if (segIdx < finger.lengths.length - 1) {
+        const joint = new THREE.Mesh(
+          new THREE.SphereGeometry(radius * 1.1, 10, 10),
+          knuckleMat
+        )
+        joint.position.y = cumulativeY - length
+        joint.scale.set(0.95, 1, 0.95)
+        joint.castShadow = true
+        fingerGroup.add(joint)
+      }
+
+      cumulativeY -= length
+    })
+
+    // Uña
+    const nailLength = finger.lengths[finger.lengths.length - 1]
+    const nail = new THREE.Mesh(
+      new THREE.BoxGeometry(0.008, nailLength * 0.5, 0.002),
+      new THREE.MeshStandardMaterial({ color: 0xffe4d5, roughness: 0.3, metalness: 0.1 })
+    )
+    nail.position.set(0, cumulativeY + nailLength * 0.25, -0.004)
+    nail.castShadow = true
+    fingerGroup.add(nail)
+
+    handGroup.add(fingerGroup)
+  })
+
+  wristGroup.add(handGroup)
+  armGroup.userData.hand = handGroup
+
+  return armGroup
+}
+
+// Crear brazos realistas
+const leftArm = createRealisticArm(true)
+const rightArm = createRealisticArm(false)
+leftHandGroup.add(leftArm)
+rightHandGroup.add(rightArm)
+
+// Partículas de brillo (para feedback OK)
+const particleCount = 80
+const particleGeo = new THREE.BufferGeometry()
+const positions = new Float32Array(particleCount * 3)
+for (let i = 0; i < particleCount * 3; i++) positions[i] = (Math.random() - 0.5) * 0.01
+particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+const particleMat = new THREE.PointsMaterial({ color: 0x00ff88, size: 0.03, transparent: true, opacity: 0 })
+const particles = new THREE.Points(particleGeo, particleMat)
+particles.position.set(0, 0.9, 0)
+scene.add(particles)
+
+// ── Controles ──
+
+// Pointer lock para mirar con el mouse
+canvas.addEventListener('click', () => {
+  canvas.requestPointerLock()
+})
+
+document.addEventListener('mousemove', e => {
+  if (document.pointerLockElement === canvas) {
+    yaw -= e.movementX * 0.002
+    pitch -= e.movementY * 0.002
+    pitch = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, pitch))
+  }
+})
+
+// Controles de teclado
+const keys = {}
+window.addEventListener('keydown', e => {
+  keys[e.code] = true
+  if (e.code === 'Space' || e.code === 'KeyE') e.preventDefault()
+})
+window.addEventListener('keyup', e => keys[e.code] = false)
+
+// Posiciones de las manos
+const leftBase = new THREE.Vector3(-0.15, -0.25, -0.6)
+const rightBase = new THREE.Vector3(0.15, -0.25, -0.6)
+const leftPos = leftBase.clone()
+const rightPos = rightBase.clone()
+const handSpeed = 0.012
+
+// ── Resize handler ──
+function resize() {
+  const W = window.innerWidth - 300
+  const H = window.innerHeight
+  camera.aspect = W / H
+  camera.updateProjectionMatrix()
+  renderer.setSize(W, H)
+}
+window.addEventListener('resize', resize)
+resize()
+
+// ─────────────────────────────────────────────
+// LÓGICA DEL SIMULADOR
+// ─────────────────────────────────────────────
+let currentStep = 0
+let animatingParticles = false
+let particleVelocities = []
+let particleLife = 0
+
+// Inicializar velocidades de partículas
+for (let i = 0; i < particleCount; i++) {
+  particleVelocities.push(new THREE.Vector3(
+    (Math.random() - 0.5) * 0.04,
+    Math.random() * 0.05 + 0.01,
+    (Math.random() - 0.5) * 0.04
+  ))
+}
+
+function buildStepsList() {
+  const list = document.getElementById('steps-list')
+  list.innerHTML = ''
+  STEPS.forEach((s, i) => {
+    const el = document.createElement('div')
+    el.className = 'step-item locked'
+    el.id = `step-item-${i}`
+    el.innerHTML = `
+      <div class="step-num">${String(i + 1).padStart(2, '0')}</div>
+      <div class="step-info">
+        <div class="step-title">${s.title}</div>
+        <div class="step-desc">${s.desc}</div>
+      </div>
+      <div class="step-check">${i === 0 ? '▶' : '○'}</div>
+    `
+    list.appendChild(el)
+  })
+  updateStepsList()
+}
+
+function updateStepsList() {
+  STEPS.forEach((_, i) => {
+    const el = document.getElementById(`step-item-${i}`)
+    const check = el.querySelector('.step-check')
+    el.className = 'step-item'
+    if (i < currentStep) {
+      el.classList.add('done')
+      check.textContent = '✓'
+    } else if (i === currentStep) {
+      el.classList.add('active')
+      check.textContent = '▶'
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    } else {
+      el.classList.add('locked')
+      check.textContent = '○'
+    }
+  })
+}
+
+function updateHUD() {
+  const s = STEPS[currentStep]
+  document.getElementById('hud-label').textContent = `PASO ${currentStep + 1} DE ${STEPS.length}`
+  document.getElementById('hud-instruction').textContent = s.instruction
+  document.getElementById('hud-detail').textContent = s.detail
+  document.getElementById('hud-tip-text').textContent = s.tip
+  document.getElementById('progress-fill').style.width = `${(currentStep / STEPS.length) * 100}%`
+}
+
+function updateScene() {
+  const s = STEPS[currentStep]
+
+  // Color de la luz de acento según la herramienta
+  fillLight.color.setHex(s.color)
+  accentLight.color.setHex(s.color)
+  accentLight.intensity = 0.6
+
+  // Mostrar fibra a partir del paso 2
+  fiberMat.opacity = currentStep >= 2 ? 0.8 : 0
+
+  // Hacer solo la herramienta del paso actual interactuable
+  tools.forEach(tool => {
+    tool.userData.interactable = (tool.userData.toolName === s.tool)
+    tool.userData.outline.material.opacity = 0
+  })
+
+  // Resaltar herramienta activa con luz pulsante
+  if (toolMap[s.tool]) {
+    const toolPos = toolMap[s.tool].position
+    accentLight.position.set(toolPos.x, toolPos.y + 0.5, toolPos.z)
+  }
+}
+
+// Sistema de detección de interacción
+let nearbyTool = null
+let canInteract = false
+
+function checkInteraction() {
+  nearbyTool = null
+  canInteract = false
+
+  // Obtener posiciones de las manos en espacio mundial
+  const leftWorldPos = new THREE.Vector3()
+  const rightWorldPos = new THREE.Vector3()
+  leftHandGroup.getWorldPosition(leftWorldPos)
+  rightHandGroup.getWorldPosition(rightWorldPos)
+
+  const interactDistance = 0.35
+
+  // Verificar cada herramienta
+  tools.forEach(tool => {
+    if (!tool.userData.interactable) {
+      tool.userData.outline.material.opacity = 0
+      return
+    }
+
+    const distLeft = leftWorldPos.distanceTo(tool.position)
+    const distRight = rightWorldPos.distanceTo(tool.position)
+    const minDist = Math.min(distLeft, distRight)
+
+    if (minDist < interactDistance) {
+      nearbyTool = tool
+      // Pulsar outline
+      const pulse = Math.sin(Date.now() * 0.005) * 0.3 + 0.5
+      tool.userData.outline.material.opacity = pulse
+      canInteract = true
+    } else {
+      tool.userData.outline.material.opacity = 0
+    }
+  })
+
+  // Actualizar HUD con indicación de interacción
+  const hudBtn = document.getElementById('btn-next')
+  if (canInteract && nearbyTool) {
+    hudBtn.textContent = `[E] Usar ${nearbyTool.userData.toolName} →`
+    hudBtn.style.background = 'var(--green)'
+  } else {
+    hudBtn.textContent = 'Acercá tu mano a la herramienta...'
+    hudBtn.style.background = 'var(--dim)'
+  }
+}
+
+function showFeedback(ok) {
+  const fb = document.getElementById('feedback')
+  document.getElementById('fb-icon').textContent = ok ? '✅' : '⚠️'
+  document.getElementById('fb-title').textContent = ok ? '¡Correcto!' : 'Advertencia'
+  document.getElementById('fb-title').className = `feedback-title ${ok ? 'ok' : 'err'}`
+  document.getElementById('fb-msg').textContent = ok
+    ? STEPS[currentStep].feedbackOk
+    : STEPS[currentStep].feedbackErr
+
+  const fbBtn = document.getElementById('fb-btn')
+  fbBtn.textContent = ok ? 'Continuar →' : 'Reintentar'
+  fbBtn.onclick = () => {
+    fb.classList.remove('visible')
+    if (ok) advanceStep()
+  }
+  fb.classList.add('visible')
+
+  if (ok) triggerParticles()
+}
+
+function triggerParticles() {
+  const pos = particleGeo.getAttribute('position')
+  for (let i = 0; i < particleCount; i++) {
+    pos.setXYZ(i, 0, 0, 0)
+  }
+  pos.needsUpdate = true
+  particleMat.opacity = 1
+  animatingParticles = true
+  particleLife = 1
+}
+
+function advanceStep() {
+  currentStep++
+  if (currentStep >= STEPS.length) {
+    document.getElementById('progress-fill').style.width = '100%'
+    setTimeout(() => {
+      document.getElementById('complete-screen').classList.add('visible')
+    }, 400)
+    return
+  }
+  updateHUD()
+  updateStepsList()
+  updateScene()
+}
+
+// Botones e interacción
+document.getElementById('btn-next').onclick = () => {
+  if (canInteract && nearbyTool) {
+    performInteraction()
+  }
+}
+
+// Interacción con tecla E
+window.addEventListener('keydown', (e) => {
+  if ((e.code === 'KeyE' || e.code === 'Space') && canInteract && nearbyTool) {
+    performInteraction()
+  }
+})
+
+function performInteraction() {
+  // Verificar que la herramienta sea la correcta para el paso actual
+  const correctTool = STEPS[currentStep].tool
+  if (nearbyTool.userData.toolName === correctTool) {
+    // Éxito: 85% de probabilidad (simulado para agregar realismo)
+    const success = Math.random() > 0.15
+    showFeedback(success)
+  }
+}
+
+document.getElementById('btn-repeat').onclick = () => {
+  updateHUD()
+  updateScene()
+}
+
+window.restartSim = () => {
+  currentStep = 0
+  document.getElementById('complete-screen').classList.remove('visible')
+  buildStepsList()
+  updateHUD()
+  updateScene()
+}
+
+// Init
+buildStepsList()
+updateHUD()
+updateScene()
+
+// ─────────────────────────────────────────────
+// RENDER LOOP
+// ─────────────────────────────────────────────
+const clock = new THREE.Clock()
+
+function animate() {
+  requestAnimationFrame(animate)
+  const t = clock.getElapsedTime()
+
+  // Mover mano izquierda con WASD
+  if (keys['KeyA']) leftPos.x -= handSpeed
+  if (keys['KeyD']) leftPos.x += handSpeed
+  if (keys['KeyW']) leftPos.z -= handSpeed
+  if (keys['KeyS']) leftPos.z += handSpeed
+  if (keys['ShiftLeft']) leftPos.y -= handSpeed * 0.8
+  if (keys['ControlLeft']) leftPos.y += handSpeed * 0.8
+
+  leftPos.x = Math.max(-0.5, Math.min(0.3, leftPos.x))
+  leftPos.y = Math.max(-0.6, Math.min(0.1, leftPos.y))
+  leftPos.z = Math.max(-1.2, Math.min(-0.1, leftPos.z))
+
+  // Mover mano derecha con flechas
+  if (keys['ArrowLeft']) rightPos.x -= handSpeed
+  if (keys['ArrowRight']) rightPos.x += handSpeed
+  if (keys['ArrowUp']) rightPos.z -= handSpeed
+  if (keys['ArrowDown']) rightPos.z += handSpeed
+  if (keys['PageDown']) rightPos.y -= handSpeed * 0.8
+  if (keys['PageUp']) rightPos.y += handSpeed * 0.8
+
+  rightPos.x = Math.max(-0.3, Math.min(0.5, rightPos.x))
+  rightPos.y = Math.max(-0.6, Math.min(0.1, rightPos.y))
+  rightPos.z = Math.max(-1.2, Math.min(-0.1, rightPos.z))
+
+  // Interpolar posiciones de manos
+  leftHandGroup.position.lerp(leftPos, 0.2)
+  rightHandGroup.position.lerp(rightPos, 0.2)
+
+  // Rotación natural de las manos
+  leftHandGroup.rotation.z = (leftPos.x - leftBase.x) * 0.5
+  rightHandGroup.rotation.z = -(rightPos.x - rightBase.x) * 0.5
+
+  // Actualizar cámara en primera persona
+  camera.position.copy(playerGroup.position)
+  camera.rotation.order = 'YXZ'
+  camera.rotation.y = yaw
+  camera.rotation.x = pitch
+
+  // Sistema de detección de interacción
+  checkInteraction()
+
+  // Pulsación de luces
+  accentLight.intensity = 0.4 + Math.sin(t * 2.2) * 0.2
+  fillLight.intensity = 0.6 + Math.sin(t * 1.4 + 1) * 0.15
+
+  // Partículas de celebración
+  if (animatingParticles) {
+    const pos = particleGeo.getAttribute('position')
+    particleLife -= 0.016
+    particleMat.opacity = Math.max(0, particleLife)
+    for (let i = 0; i < particleCount; i++) {
+      const v = particleVelocities[i]
+      pos.setXYZ(i,
+        pos.getX(i) + v.x,
+        pos.getY(i) + v.y,
+        pos.getZ(i) + v.z
+      )
+      v.y -= 0.001
+    }
+    pos.needsUpdate = true
+    if (particleLife <= 0) animatingParticles = false
+  }
+
+  renderer.render(scene, camera)
+}
+
+animate()
+</script>
+</body>
+</html>
