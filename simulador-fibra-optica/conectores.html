@@ -309,6 +309,7 @@
 
 <script type="module">
 import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 // ─────────────────────────────────────────────
 // DATOS DEL SIMULADOR
@@ -524,9 +525,103 @@ const accentLight = new THREE.PointLight(0xff6b00, 0.0, 6)
 accentLight.position.set(0, 1, 2)
 scene.add(accentLight)
 
-// ── Entorno fotorrealista: Terraza de edificio ──
+// ═════════════════════════════════════════════════
+// CARGA DE MODELOS 3D
+// ═════════════════════════════════════════════════
+const gltfLoader = new GLTFLoader()
 
-// Piso de concreto con textura procedural
+// Promesas de carga de modelos
+const loadBuilding = new Promise((resolve) => {
+  gltfLoader.load('/libertad_-_edificio_c.glb', (gltf) => {
+    const building = gltf.scene
+    building.scale.set(0.8, 0.8, 0.8)
+    building.position.set(0, 0, -5)
+    building.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+    scene.add(building)
+    resolve()
+  }, undefined, () => {
+    console.error('Error cargando edificio')
+    resolve()
+  })
+})
+
+const loadTable = new Promise((resolve) => {
+  gltfLoader.load('/metal_table_asset.glb', (gltf) => {
+    const table = gltf.scene
+    table.scale.set(1.2, 1.2, 1.2)
+    table.position.set(0, 0.5, 0)
+    table.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+    scene.add(table)
+    resolve()
+  }, undefined, () => {
+    console.error('Error cargando mesa')
+    resolve()
+  })
+})
+
+const loadCable = new Promise((resolve) => {
+  gltfLoader.load('/custom_5g_fiber_cable.glb', (gltf) => {
+    const cable = gltf.scene
+    cable.scale.set(0.8, 0.8, 0.8)
+    cable.position.set(0, 0.85, 0)
+    cable.rotation.z = Math.PI / 2
+    cable.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+    scene.add(cable)
+    resolve()
+  }, undefined, () => {
+    console.error('Error cargando cable')
+    resolve()
+  })
+})
+
+const loadHands = new Promise((resolve) => {
+  gltfLoader.load('/interlocking_gloved_hands.glb', (gltf) => {
+    const hands = gltf.scene
+    hands.scale.set(0.003, 0.003, 0.003)
+    hands.traverse(child => {
+      if (child.isMesh) child.castShadow = true
+    })
+
+    // Agregar manos a los grupos (izquierda y derecha)
+    const leftHand = hands.clone()
+    leftHand.scale.set(0.003, 0.003, 0.003)
+    leftHand.rotation.z = 0.3
+    leftHandGroup.add(leftHand)
+
+    const rightHand = hands.clone()
+    rightHand.scale.set(-0.003, 0.003, 0.003)
+    rightHand.rotation.z = -0.3
+    rightHandGroup.add(rightHand)
+
+    resolve()
+  }, undefined, () => {
+    console.error('Error cargando manos')
+    resolve()
+  })
+})
+
+// Esperar a que carguen todos los modelos antes de iniciar
+Promise.all([loadBuilding, loadTable, loadCable, loadHands]).then(() => {
+  console.log('Todos los modelos 3D cargados exitosamente')
+})
+
+// ─────────────────────────────────────────────
+/* COMENTADO: Geometría procedural reemplazada por modelos 3D
 const floorGeom = new THREE.PlaneGeometry(20, 20, 50, 50)
 const floorMat = new THREE.MeshStandardMaterial({
   color: 0xc8c8c0,
@@ -644,7 +739,11 @@ for (let i = -7; i <= 7; i += 2) {
   glass.position.set(i + 1, 0.85, 9.5)
   scene.add(glass)
 }
+*/
 
+// — GEOMETRÍA PROCEDURAL DEL EDIFICIO COMENTADA (reemplazada por modelo) —
+
+/*
 // Mesa de trabajo de madera realista
 const woodMat = new THREE.MeshStandardMaterial({
   color: 0x8b6f47,
@@ -691,8 +790,12 @@ legPositions.forEach(([x, z]) => {
   foot.position.set(x, 0.008, z)
   scene.add(foot)
 })
+*/
+
+// — MODELO DE MESA IMPORTADO —
 
 // ── Antena de telecomunicaciones realista ──
+/*
 const antennaGroup = new THREE.Group()
 antennaGroup.position.set(6, 0, -7)
 
@@ -847,7 +950,11 @@ warning.position.set(-0.4, 2, 0.11)
 antennaGroup.add(warning)
 
 scene.add(antennaGroup)
+*/
 
+// — MODELO DE CABLE IMPORTADO —
+
+/* COMENTADO: Cable procedural reemplazado por modelo
 // ── Herramientas y objetos 3D ──
 
 // Cable de fibra (cilindro horizontal en el centro de la mesa)
@@ -864,6 +971,9 @@ const fiber = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.4, 8), f
 fiber.rotation.z = Math.PI / 2
 fiber.position.set(0.6, 0.76, 0)
 scene.add(fiber)
+*/
+
+// ── Herramientas y objetos 3D ──
 
 // Array de herramientas interactuables
 const tools = []
@@ -920,6 +1030,7 @@ const toolMap = {
   'inspector': inspector
 }
 
+/* COMENTADO: Brazos procedurales reemplazados por modelo de manos importado
 // ── Sistema de brazos org ánicos y realistas ──
 
 // Función auxiliar para crear cápsula orgánica (forma de músculo)
@@ -1174,6 +1285,9 @@ const leftArm = createRealisticArm(true)
 const rightArm = createRealisticArm(false)
 leftHandGroup.add(leftArm)
 rightHandGroup.add(rightArm)
+*/
+
+// — MANOS IMPORTADAS DEL MODELO 3D —
 
 // Partículas de brillo (para feedback OK)
 const particleCount = 80
