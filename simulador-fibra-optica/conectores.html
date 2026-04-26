@@ -602,27 +602,35 @@ const loadCable = new Promise((resolve) => {
 })
 
 const loadHands = new Promise((resolve) => {
-  gltfLoader.load('/interlocking_gloved_hands.glb', (gltf) => {
+  gltfLoader.load('/hand-arm.glb', (gltf) => {
+    console.log('✓ Manos cargadas exitosamente')
     const hands = gltf.scene
-    hands.scale.set(0.003, 0.003, 0.003)
     hands.traverse(child => {
-      if (child.isMesh) child.castShadow = true
+      if (child.isMesh) {
+        child.castShadow = true
+        console.log('Malla de mano encontrada:', child.name)
+      }
     })
 
-    // Agregar manos a los grupos (izquierda y derecha)
+    // Agregar mano izquierda
     const leftHand = hands.clone()
-    leftHand.scale.set(0.003, 0.003, 0.003)
+    leftHand.scale.set(0.01, 0.01, 0.01)  // Aumentada de 0.003 a 0.01
+    leftHand.rotation.x = -0.3
     leftHand.rotation.z = 0.3
     leftHandGroup.add(leftHand)
+    console.log('Mano izquierda agregada')
 
+    // Agregar mano derecha (espejada)
     const rightHand = hands.clone()
-    rightHand.scale.set(-0.003, 0.003, 0.003)
+    rightHand.scale.set(-0.01, 0.01, 0.01)  // Escala X negativa para espejo
+    rightHand.rotation.x = -0.3
     rightHand.rotation.z = -0.3
     rightHandGroup.add(rightHand)
+    console.log('Mano derecha agregada')
 
     resolve()
-  }, undefined, () => {
-    console.error('Error cargando manos')
+  }, undefined, (error) => {
+    console.error('✗ Error cargando manos:', error)
     resolve()
   })
 })

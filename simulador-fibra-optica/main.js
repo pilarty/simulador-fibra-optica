@@ -59,33 +59,74 @@ const rightGroup = new THREE.Group()
 camera.add(leftGroup)
 camera.add(rightGroup)
 
-leftGroup.position.set(-0.05, -0.25, -0.5)
-rightGroup.position.set( 0.05, -0.25, -0.5)
+leftGroup.position.set(-0.3, -0.3, -0.8)
+rightGroup.position.set( 0.3, -0.3, -0.8)
+
+// Cubo de debug para verificar que se renderiza algo
+const debugCube = new THREE.Mesh(
+  new THREE.BoxGeometry(0.1, 0.1, 0.1),
+  new THREE.MeshBasicMaterial({ color: 0xff00ff })
+)
+debugCube.position.set(0, 0, 0.5)  // Más cerca del usuario (z positivo)
+camera.add(debugCube)
+console.log('Cubo de debug agregado en posición del usuario')
 
 // Cargar modelo del cuerpo
 const loader = new GLTFLoader()
 
 // Cargar manos
+console.log('Cargando manos...')
 loader.load(
   '/hand-arm.glb',
   (gltf) => {
+    console.log('✓ Manos cargadas correctamente')
+    console.log('Estructura del modelo:', gltf.scene)
+    
     const makeArm = (mirror) => {
       const model = gltf.scene.clone()
+      
+      // Log de la geometría
+      let meshCount = 0
       model.traverse(child => {
-        if (child.isMesh) child.castShadow = true
+        if (child.isMesh) {
+          meshCount++
+          child.castShadow = true
+          console.log(`Malla ${meshCount}:`, child.name, { 
+            geometry: child.geometry, 
+            position: child.position 
+          })
+        }
       })
-      const s = 0.004
+      console.log(`Total de mallas encontradas: ${meshCount}`)
+      
+      // Escala MUCHO más grande para debug
+      const s = 0.1  // Muy grande para debug
       model.scale.set(s, s, s)
       if (mirror) model.scale.x = -s
-      model.rotation.x = -0.6
-      model.rotation.z = mirror ? 0.3 : -0.3
+      
+      // Sin rotaciones complejas por ahora
+      model.rotation.x = 0
+      model.rotation.z = 0
+      
       return model
     }
-    leftGroup.add(makeArm(false))
-    rightGroup.add(makeArm(true))
+    
+    const leftArm = makeArm(false)
+    const rightArm = makeArm(true)
+    
+    leftGroup.add(leftArm)
+    rightGroup.add(rightArm)
+    
+    console.log('✓ Brazos agregados')
+    console.log('leftGroup children:', leftGroup.children.length)
+    console.log('rightGroup children:', rightGroup.children.length)
   },
-  undefined,
-  () => { console.log('Sin modelo de manos, continuando sin ellas') }
+  (progress) => {
+    console.log('Cargando manos:', (progress.loaded / progress.total * 100).toFixed(0) + '%')
+  },
+  (error) => { 
+    console.error('✗ Error cargando manos:', error)
+  }
 )
 
 // HUD
