@@ -479,7 +479,7 @@ scene.add(camera)
 
 // Estado del jugador
 const playerGroup = new THREE.Group()
-playerGroup.position.set(7, 12, -8) // Posición en el techo del edificio (Y = altura)
+playerGroup.position.set(0, 44, -8) // Posición en el techo del edificio (Y = altura)
 scene.add(playerGroup)
 
 // Rotación de cámara
@@ -542,10 +542,10 @@ const collisionObjects = []
 
 // Promesas de carga de modelos
 const loadBuilding = new Promise((resolve) => {
-  gltfLoader.load('/libertad_-_edificio_c.glb', (gltf) => {
+  gltfLoader.load('/Modelos GLB/old_city_building.glb', (gltf) => {
     const building = gltf.scene
-    building.scale.set(0.8, 0.8, 0.8)
-    building.position.set(0, 0, -5)
+    building.scale.set(1.8, 1.8, 1.8)
+    building.position.set(0, 0, -8)
     building.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true
@@ -562,10 +562,10 @@ const loadBuilding = new Promise((resolve) => {
 })
 
 const loadTable = new Promise((resolve) => {
-  gltfLoader.load('/metal_table_asset.glb', (gltf) => {
+  gltfLoader.load('/Modelos GLB/metal_table_asset.glb', (gltf) => {
     const table = gltf.scene
-    table.scale.set(1.2, 1.2, 1.2)
-    table.position.set(7, 0.5, -8)
+    table.scale.set(2.2, 2.2, 2.2)
+    table.position.set(12, 1, -14)
     table.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true
@@ -582,10 +582,10 @@ const loadTable = new Promise((resolve) => {
 })
 
 const loadCable = new Promise((resolve) => {
-  gltfLoader.load('/custom_5g_fiber_cable.glb', (gltf) => {
+  gltfLoader.load('/Modelos GLB/custom_5g_fiber_cable.glb', (gltf) => {
     const cable = gltf.scene
-    cable.scale.set(0.008, 0.008, 0.008)
-    cable.position.set(7, 11.5, -8)
+    cable.scale.set(0.018, 0.018, 0.018)
+    cable.position.set(12, 25, -14)
     cable.rotation.z = Math.PI / 2
     cable.traverse(child => {
       if (child.isMesh) {
@@ -602,7 +602,7 @@ const loadCable = new Promise((resolve) => {
 })
 
 const loadHands = new Promise((resolve) => {
-  gltfLoader.load('/hand-arm.glb', (gltf) => {
+  gltfLoader.load('/Modelos GLB/hand-arm.glb', (gltf) => {
     console.log('✓ Manos cargadas exitosamente')
     const hands = gltf.scene
     hands.traverse(child => {
@@ -1650,7 +1650,7 @@ function animate() {
 
   // Límite inferior (si cae del edificio)
   if (playerGroup.position.y < -10) {
-    playerGroup.position.set(7, 12, -8)
+    playerGroup.position.set(0, 44, -8)
     verticalVelocity = 0
   }
 
@@ -1700,6 +1700,7 @@ function animate() {
 
   // Actualizar cámara en primera persona
   camera.position.copy(playerGroup.position)
+  camera.position.y += 0.8  // Altura de los ojos
   camera.rotation.order = 'YXZ'
   camera.rotation.y = yaw
   camera.rotation.x = pitch

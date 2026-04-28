@@ -43,7 +43,7 @@ for (let i = 0; i < 10; i++) {
 
 // Estado del personaje
 const bodyGroup = new THREE.Group()
-bodyGroup.position.set(0, 0, 0)
+bodyGroup.position.set(-15, 0, 0)
 scene.add(bodyGroup)
 
 // Posicion de camara dentro de la cabeza (se ajusta cuando carga el modelo)
@@ -77,7 +77,7 @@ const loader = new GLTFLoader()
 // Cargar manos
 console.log('Cargando manos...')
 loader.load(
-  '/hand-arm.glb',
+  '/Modelos GLB/hand-arm.glb',
   (gltf) => {
     console.log('✓ Manos cargadas correctamente')
     console.log('Estructura del modelo:', gltf.scene)
