@@ -559,7 +559,9 @@ const loadBuilding = new Promise((resolve) => {
     console.error('Error cargando edificio')
     resolve()
   })
-})
+}) 
+
+
 
 const loadTable = new Promise((resolve) => {
   gltfLoader.load('/Modelos GLB/metal_table_asset.glb', (gltf) => {
