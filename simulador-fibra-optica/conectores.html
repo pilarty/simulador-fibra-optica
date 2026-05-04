@@ -516,6 +516,7 @@ const jumpStrength = 0.35
 let isGrounded = false
 const collisionObjects = []
 const wallColliders = [] // Solo paredes para colisión horizontal
+const wallVisuals = [] // Paredes para cambiar visibilidad
 
 // Promesas de carga de modelos
 const loadBuilding = new Promise((resolve) => {
@@ -662,7 +663,7 @@ Promise.all([loadBuilding, loadTable, loadCable, loadHands, loadPanelPared]).the
       roughness: 0.8,
       metalness: 0.1,
       transparent: true,
-      opacity: 0.6
+      opacity: 0
     })
     const wall = new THREE.Mesh(wallGeom, wallMat)
     wall.position.set(centerX, centerY, centerZ)
@@ -670,14 +671,30 @@ Promise.all([loadBuilding, loadTable, loadCable, loadHands, loadPanelPared]).the
     wall.receiveShadow = true
     scene.add(wall)
     wallColliders.push(wall) // Agregar solo a paredes
+    wallVisuals.push(wall) // Guardar referencia para cambiar visibilidad
     console.log(`✓ Pared creada: pos=(${centerX.toFixed(2)}, ${centerY.toFixed(2)}, ${centerZ.toFixed(2)}) size=(${width.toFixed(2)}, ${height.toFixed(2)}, ${depth.toFixed(2)})`)
     return wall
   }
   
-  // Pared izquierda (X: -1.13, Y: 30.16-34.16, Z: -0.71 a -9.40) - bajada 3 unidades
-  createWall(-1.18, -1.08, 30.16, 34.16, -0.71, -9.40)
-  console.log('✓ Pared izquierda agregada')
-  console.log('Total collisionObjects:', collisionObjects.length)
+  // Pared izquierda SUPERIOR (X: -1.13, Y: 30.16-34.16, Z: -0.71 a -7.0)
+  createWall(-1.18, -1.08, 30.16, 34.16, -0.71, -7.0)
+  console.log('✓ Pared izquierda superior agregada')
+  
+  // Pared izquierda INFERIOR (X: -1.13, Y: 30.16-34.16, Z: -8.8 a -9.40)
+  createWall(-1.18, -1.08, 30.16, 34.16, -8.8, -9.40)
+  console.log('✓ Pared izquierda inferior agregada (hueco entre Z: -7.0 a -8.8)')
+  
+  // Pared paralela (X: -5.50, Y: 30.16-34.16, Z: -0.71 a -9.40)
+  createWall(-5.55, -5.45, 30.16, 34.16, -0.71, -9.40)
+  console.log('✓ Pared paralela agregada')
+  
+  // Pared frontal (Z: -0.71, Y: 30.16-34.16, X: -1.13 a -5.50)
+  createWall(-5.55, -1.08, 30.16, 34.16, -0.76, -0.66)
+  console.log('✓ Pared frontal agregada')
+  
+  // Pared posterior (Z: -9.40, Y: 30.16-34.16, X: -1.13 a -5.50)
+  createWall(-5.55, -1.08, 30.16, 34.16, -9.45, -9.35)
+  console.log('✓ Pared posterior agregada')
 })
 
 // ─────────────────────────────────────────────
@@ -1848,6 +1865,11 @@ function animate() {
     
     document.getElementById('debug-look').textContent = lookText
   }
+
+  // Actualizar visibilidad de paredes según debug mode (siempre, no dentro del if)
+  wallVisuals.forEach(wall => {
+    wall.material.opacity = debugMode ? 0.6 : 0
+  })
 
   // Sistema de detección de interacción
   checkInteraction()
