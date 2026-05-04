@@ -110,7 +110,7 @@
 
     /* ── HUD CENTRAL ── */
     #hud {
-      position: fixed; bottom: 0; left: 0; right: 300px; z-index: 100;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
       pointer-events: none;
     }
 
@@ -202,7 +202,7 @@
 
     /* ── PROGRESO ── */
     #progress-bar {
-      position: fixed; top: 0; left: 0; right: 300px;
+      position: fixed; top: 0; left: 0; right: 0;
       height: 3px; z-index: 101;
       background: var(--border);
     }
@@ -247,32 +247,6 @@
 
 <div id="progress-bar"><div id="progress-fill"></div></div>
 
-<!-- Panel de pasos -->
-<div id="steps-panel">
-  <div class="panel-header">
-    <div class="eyebrow">SC/APC · Conector Verde</div>
-    <h2>Instalación Paso a Paso</h2>
-  </div>
-  <div class="steps-list" id="steps-list"></div>
-</div>
-
-<!-- HUD instrucciones -->
-<div id="hud">
-  <div class="hud-inner">
-    <div class="hud-step-label" id="hud-label">PASO 1 DE 8</div>
-    <div class="hud-instruction" id="hud-instruction">—</div>
-    <div class="hud-detail" id="hud-detail">—</div>
-    <div class="hud-tip" id="hud-tip">
-      <i class="tip-icon">💡</i>
-      <span id="hud-tip-text">—</span>
-    </div>
-    <div class="hud-actions">
-      <button class="btn btn-primary" id="btn-next">Acercá tu mano a la herramienta...</button>
-      <button class="btn btn-secondary" id="btn-repeat">↺ Ver de nuevo</button>
-    </div>
-  </div>
-</div>
-
 <!-- HUD de controles -->
 <div style="position: fixed; top: 80px; left: 16px; z-index: 100; background: rgba(4,8,15,0.88); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; backdrop-filter: blur(6px); font-family: 'Share Tech Mono', monospace; font-size: 10px; line-height: 1.8; color: var(--dim);">
   <div style="color: var(--blue); font-weight: bold; margin-bottom: 6px; letter-spacing: 2px;">CONTROLES</div>
@@ -285,6 +259,8 @@
   <div><span style="color: var(--accent2);">FLECHAS</span> → Mano der. (PgUp/PgDn arriba/abajo)</div>
   <div><span style="color: var(--green);">E</span> → Interactuar con herramientas</div>
 </div>
+
+
 
 <!-- Feedback overlay -->
 <div id="feedback">
@@ -539,6 +515,7 @@ const gravity = -0.02
 const jumpStrength = 0.35
 let isGrounded = false
 const collisionObjects = []
+const wallColliders = [] // Solo paredes para colisión horizontal
 
 // Promesas de carga de modelos
 const loadBuilding = new Promise((resolve) => {
@@ -668,6 +645,39 @@ const loadHands = new Promise((resolve) => {
 // Esperar a que carguen todos los modelos antes de iniciar
 Promise.all([loadBuilding, loadTable, loadCable, loadHands, loadPanelPared]).then(() => {
   console.log('Todos los modelos 3D cargados exitosamente')
+  
+  // Crear paredes personalizadas con collisión
+  function createWall(minX, maxX, minY, maxY, minZ, maxZ) {
+    const width = Math.abs(maxX - minX)
+    const height = maxY - minY
+    const depth = Math.abs(maxZ - minZ)
+    
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+    const centerZ = (minZ + maxZ) / 2
+    
+    const wallGeom = new THREE.BoxGeometry(width, height, depth)
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0xff0000,
+      roughness: 0.8,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.6
+    })
+    const wall = new THREE.Mesh(wallGeom, wallMat)
+    wall.position.set(centerX, centerY, centerZ)
+    wall.castShadow = true
+    wall.receiveShadow = true
+    scene.add(wall)
+    wallColliders.push(wall) // Agregar solo a paredes
+    console.log(`✓ Pared creada: pos=(${centerX.toFixed(2)}, ${centerY.toFixed(2)}, ${centerZ.toFixed(2)}) size=(${width.toFixed(2)}, ${height.toFixed(2)}, ${depth.toFixed(2)})`)
+    return wall
+  }
+  
+  // Pared izquierda (X: -1.13, Y: 30.16-34.16, Z: -0.71 a -9.40) - bajada 3 unidades
+  createWall(-1.18, -1.08, 30.16, 34.16, -0.71, -9.40)
+  console.log('✓ Pared izquierda agregada')
+  console.log('Total collisionObjects:', collisionObjects.length)
 })
 
 // ─────────────────────────────────────────────
@@ -1367,6 +1377,8 @@ document.addEventListener('mousemove', e => {
 
 // Controles de teclado
 const keys = {}
+let debugMode = false
+
 window.addEventListener('keydown', e => {
   keys[e.code] = true
   if (e.code === 'Space' && isGrounded) {
@@ -1387,8 +1399,43 @@ window.addEventListener('keydown', e => {
     }
     posDiv.textContent = pos
   }
+  if (e.code === 'Digit2') {
+    debugMode = !debugMode
+    const debugPanel = document.getElementById('debug-panel')
+    if (debugPanel) {
+      debugPanel.style.display = debugMode ? 'block' : 'none'
+    }
+  }
 })
 window.addEventListener('keyup', e => keys[e.code] = false)
+
+// Crear panel de debug
+const debugPanel = document.createElement('div')
+debugPanel.id = 'debug-panel'
+debugPanel.style.cssText = `
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.9);
+  color: #00ff88;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 12px 16px;
+  border: 1px solid #00ff88;
+  border-radius: 4px;
+  line-height: 1.6;
+  display: none;
+  max-width: 350px;
+`
+debugPanel.innerHTML = `
+  <div style="color: #ff6b00; margin-bottom: 8px; font-weight: bold;">== DEBUG MODE ==</div>
+  <div id="debug-pos">Posición: --</div>
+  <div id="debug-angle">Ángulo: --</div>
+  <div id="debug-look">Mirando a: --</div>
+  <div style="color: #aaa; margin-top: 8px; font-size: 11px;">Presiona 2 para cerrar</div>
+`
+document.body.appendChild(debugPanel)
 
 // Posiciones de las manos
 const leftBase = new THREE.Vector3(-0.15, -0.25, -0.6)
@@ -1399,7 +1446,7 @@ const handSpeed = 0.012
 
 // ── Resize handler ──
 function resize() {
-  const W = window.innerWidth - 300
+  const W = window.innerWidth
   const H = window.innerHeight
   camera.aspect = W / H
   camera.updateProjectionMatrix()
@@ -1425,53 +1472,53 @@ for (let i = 0; i < particleCount; i++) {
   ))
 }
 
-function buildStepsList() {
-  const list = document.getElementById('steps-list')
-  list.innerHTML = ''
-  STEPS.forEach((s, i) => {
-    const el = document.createElement('div')
-    el.className = 'step-item locked'
-    el.id = `step-item-${i}`
-    el.innerHTML = `
-      <div class="step-num">${String(i + 1).padStart(2, '0')}</div>
-      <div class="step-info">
-        <div class="step-title">${s.title}</div>
-        <div class="step-desc">${s.desc}</div>
-      </div>
-      <div class="step-check">${i === 0 ? '▶' : '○'}</div>
-    `
-    list.appendChild(el)
-  })
-  updateStepsList()
-}
+// function buildStepsList() {
+//   const list = document.getElementById('steps-list')
+//   list.innerHTML = ''
+//   STEPS.forEach((s, i) => {
+//     const el = document.createElement('div')
+//     el.className = 'step-item locked'
+//     el.id = `step-item-${i}`
+//     el.innerHTML = `
+//       <div class="step-num">${String(i + 1).padStart(2, '0')}</div>
+//       <div class="step-info">
+//         <div class="step-title">${s.title}</div>
+//         <div class="step-desc">${s.desc}</div>
+//       </div>
+//       <div class="step-check">${i === 0 ? '▶' : '○'}</div>
+//     `
+//     list.appendChild(el)
+//   })
+//   updateStepsList()
+// }
 
-function updateStepsList() {
-  STEPS.forEach((_, i) => {
-    const el = document.getElementById(`step-item-${i}`)
-    const check = el.querySelector('.step-check')
-    el.className = 'step-item'
-    if (i < currentStep) {
-      el.classList.add('done')
-      check.textContent = '✓'
-    } else if (i === currentStep) {
-      el.classList.add('active')
-      check.textContent = '▶'
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    } else {
-      el.classList.add('locked')
-      check.textContent = '○'
-    }
-  })
-}
+// function updateStepsList() {
+//   STEPS.forEach((_, i) => {
+//     const el = document.getElementById(`step-item-${i}`)
+//     const check = el.querySelector('.step-check')
+//     el.className = 'step-item'
+//     if (i < currentStep) {
+//       el.classList.add('done')
+//       check.textContent = '✓'
+//     } else if (i === currentStep) {
+//       el.classList.add('active')
+//       check.textContent = '▶'
+//       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+//     } else {
+//       el.classList.add('locked')
+//       check.textContent = '○'
+//     }
+//   })
+// }
 
-function updateHUD() {
-  const s = STEPS[currentStep]
-  document.getElementById('hud-label').textContent = `PASO ${currentStep + 1} DE ${STEPS.length}`
-  document.getElementById('hud-instruction').textContent = s.instruction
-  document.getElementById('hud-detail').textContent = s.detail
-  document.getElementById('hud-tip-text').textContent = s.tip
-  document.getElementById('progress-fill').style.width = `${(currentStep / STEPS.length) * 100}%`
-}
+// function updateHUD() {
+//   const s = STEPS[currentStep]
+//   document.getElementById('hud-label').textContent = `PASO ${currentStep + 1} DE ${STEPS.length}`
+//   document.getElementById('hud-instruction').textContent = s.instruction
+//   document.getElementById('hud-detail').textContent = s.detail
+//   document.getElementById('hud-tip-text').textContent = s.tip
+//   document.getElementById('progress-fill').style.width = `${(currentStep / STEPS.length) * 100}%`
+// }
 
 function updateScene() {
   const s = STEPS[currentStep]
@@ -1538,14 +1585,14 @@ function checkInteraction() {
   })
 
   // Actualizar HUD con indicación de interacción
-  const hudBtn = document.getElementById('btn-next')
-  if (canInteract && nearbyTool) {
-    hudBtn.textContent = `[E] Usar ${nearbyTool.userData.toolName} →`
-    hudBtn.style.background = 'var(--green)'
-  } else {
-    hudBtn.textContent = 'Acercá tu mano a la herramienta...'
-    hudBtn.style.background = 'var(--dim)'
-  }
+  // const hudBtn = document.getElementById('btn-next')
+  // if (hudBtn && canInteract && nearbyTool) {
+  //   hudBtn.textContent = `[E] Usar ${nearbyTool.userData.toolName} →`
+  //   hudBtn.style.background = 'var(--green)'
+  // } else if (hudBtn) {
+  //   hudBtn.textContent = 'Acercá tu mano a la herramienta...'
+  //   hudBtn.style.background = 'var(--dim)'
+  // }
 }
 
 function showFeedback(ok) {
@@ -1588,17 +1635,17 @@ function advanceStep() {
     }, 400)
     return
   }
-  updateHUD()
-  updateStepsList()
+  // updateHUD()
+  // updateStepsList()
   updateScene()
 }
 
 // Botones e interacción
-document.getElementById('btn-next').onclick = () => {
-  if (canInteract && nearbyTool) {
-    performInteraction()
-  }
-}
+// document.getElementById('btn-next').onclick = () => {
+//   if (canInteract && nearbyTool) {
+//     performInteraction()
+//   }
+// }
 
 // Interacción con tecla E
 window.addEventListener('keydown', (e) => {
@@ -1617,22 +1664,22 @@ function performInteraction() {
   }
 }
 
-document.getElementById('btn-repeat').onclick = () => {
-  updateHUD()
-  updateScene()
-}
+// document.getElementById('btn-repeat').onclick = () => {
+//   updateHUD()
+//   updateScene()
+// }
 
 window.restartSim = () => {
   currentStep = 0
   document.getElementById('complete-screen').classList.remove('visible')
-  buildStepsList()
-  updateHUD()
+  // buildStepsList()
+  // updateHUD()
   updateScene()
 }
 
 // Init
-buildStepsList()
-updateHUD()
+// buildStepsList()
+// updateHUD()
 updateScene()
 
 // ─────────────────────────────────────────────
@@ -1644,23 +1691,48 @@ function animate() {
   requestAnimationFrame(animate)
   const t = clock.getElapsedTime()
 
-  // Mover jugador con WASD
+  // Mover jugador con WASD (con colisión horizontal)
   const playerSpeed = 0.15
+  const playerRadius = 0.4 // Radio de colisión del jugador
+  
+  function tryMove(deltaX, deltaZ) {
+    const newPos = new THREE.Vector3(
+      playerGroup.position.x + deltaX,
+      playerGroup.position.y,
+      playerGroup.position.z + deltaZ
+    )
+    
+    // Crear caja de colisión alrededor del jugador
+    const playerBox = new THREE.Box3().setFromCenterAndSize(
+      newPos,
+      new THREE.Vector3(playerRadius * 2, 2, playerRadius * 2)
+    )
+    
+    // Verificar colisión SOLO contra paredes
+    for (let wall of wallColliders) {
+      const wallBox = new THREE.Box3().setFromObject(wall)
+      if (playerBox.intersectsBox(wallBox)) {
+        return false // Colisión detectada
+      }
+    }
+    
+    // Sin colisión, actualizar posición
+    playerGroup.position.x = newPos.x
+    playerGroup.position.z = newPos.z
+    return true
+  }
+  
   if (keys['KeyW']) {
-    playerGroup.position.x -= Math.sin(yaw) * playerSpeed
-    playerGroup.position.z -= Math.cos(yaw) * playerSpeed
+    tryMove(-Math.sin(yaw) * playerSpeed, -Math.cos(yaw) * playerSpeed)
   }
   if (keys['KeyS']) {
-    playerGroup.position.x += Math.sin(yaw) * playerSpeed
-    playerGroup.position.z += Math.cos(yaw) * playerSpeed
+    tryMove(Math.sin(yaw) * playerSpeed, Math.cos(yaw) * playerSpeed)
   }
   if (keys['KeyA']) {
-    playerGroup.position.x -= Math.cos(yaw) * playerSpeed
-    playerGroup.position.z += Math.sin(yaw) * playerSpeed
+    tryMove(-Math.cos(yaw) * playerSpeed, Math.sin(yaw) * playerSpeed)
   }
   if (keys['KeyD']) {
-    playerGroup.position.x += Math.cos(yaw) * playerSpeed
-    playerGroup.position.z -= Math.sin(yaw) * playerSpeed
+    tryMove(Math.cos(yaw) * playerSpeed, -Math.sin(yaw) * playerSpeed)
   }
 
   // Sistema de gravedad y detección de suelo
@@ -1746,6 +1818,36 @@ function animate() {
   camera.rotation.order = 'YXZ'
   camera.rotation.y = yaw
   camera.rotation.x = pitch
+
+  // Actualizar panel de debug
+  if (debugMode) {
+    const pos = playerGroup.position
+    document.getElementById('debug-pos').textContent = 
+      `Posición: X=${pos.x.toFixed(2)} Y=${pos.y.toFixed(2)} Z=${pos.z.toFixed(2)}`
+    
+    document.getElementById('debug-angle').textContent = 
+      `Ángulo: Yaw=${(yaw * 180 / Math.PI).toFixed(0)}° Pitch=${(pitch * 180 / Math.PI).toFixed(0)}°`
+    
+    // Raycast hacia donde mira
+    const direction = new THREE.Vector3(0, 0, -1)
+    direction.applyQuaternion(camera.quaternion)
+    const raycaster = new THREE.Raycaster(camera.position, direction)
+    
+    // Raycast a los objetos del edificio para saber qué hay adelante
+    const hits = raycaster.intersectObjects(collisionObjects, true)
+    let lookText = 'Mirando al vacío'
+    
+    if (hits.length > 0) {
+      const hit = hits[0]
+      lookText = `Mirando a: X=${hit.point.x.toFixed(2)} Y=${hit.point.y.toFixed(2)} Z=${hit.point.z.toFixed(2)} (Dist: ${hit.distance.toFixed(2)}m)`
+    } else {
+      // Si no hay hit, mostrar punto a 10m adelante
+      const far = camera.position.clone().add(direction.multiplyScalar(10))
+      lookText = `Mirando a: X=${far.x.toFixed(2)} Y=${far.y.toFixed(2)} Z=${far.z.toFixed(2)} (Vacío)`
+    }
+    
+    document.getElementById('debug-look').textContent = lookText
+  }
 
   // Sistema de detección de interacción
   checkInteraction()
