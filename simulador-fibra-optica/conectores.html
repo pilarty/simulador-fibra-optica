@@ -289,10 +289,8 @@
 <script type="module">
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { initPanelElectrico, swapPanelElectrico, checkHandNearPanel, handNearPanelElectrico } from './panelElectrico.js'
 
-// ─────────────────────────────────────────────
-// DATOS DEL SIMULADOR
-// ─────────────────────────────────────────────
 const STEPS = [
   {
     id: 0,
@@ -581,33 +579,6 @@ const loadCable = new Promise((resolve) => {
   })
 })
 
-const loadPanelPared = new Promise((resolve) => {
-  gltfLoader.load('/Modelos GLB/panelPared.glb', (gltf) => {
-    const panel = gltf.scene
-    panel.scale.set(1, 1, 1)
-    panel.position.set(-3.56, 33.15, -0.88)
-    panel.rotation.y = Math.PI // 180 grados
-    panel.traverse(child => {
-      if (child.isMesh) {
-        child.castShadow = true
-        child.receiveShadow = true
-      }
-    })
-    scene.add(panel)
-
-    // 👇 AGREGÁ ESTO
-    panel.traverse(child => {
-      if (child.isMesh) {
-        console.log('Mesh:', child.name)
-      }
-    })
-
-    resolve()
-  }, undefined, () => {
-    console.error('Error cargando panel de pared')
-    resolve()
-  })
-})
 
 const loadHands = new Promise((resolve) => {
   gltfLoader.load('/Modelos GLB/hand-arm.glb', (gltf) => {
@@ -644,7 +615,7 @@ const loadHands = new Promise((resolve) => {
 })
 
 // Esperar a que carguen todos los modelos antes de iniciar
-Promise.all([loadBuilding, loadTable, loadCable, loadHands, loadPanelPared]).then(() => {
+Promise.all([loadBuilding, loadTable, loadCable, loadHands, initPanelElectrico(scene)]).then(() => {
   console.log('Todos los modelos 3D cargados exitosamente')
   
   // Crear paredes personalizadas con collisión
@@ -1402,7 +1373,10 @@ window.addEventListener('keydown', e => {
     verticalVelocity = jumpStrength
     isGrounded = false
   }
-  if (e.code === 'KeyE') e.preventDefault()
+  if (e.code === 'KeyE') {
+  e.preventDefault()
+  if (handNearPanelElectrico) swapPanelElectrico()
+}
   if (e.code === 'Digit1') {
     const pos = `X=${playerGroup.position.x.toFixed(2)} Y=${playerGroup.position.y.toFixed(2)} Z=${playerGroup.position.z.toFixed(2)}`
     console.log('POS', pos)
@@ -1600,6 +1574,9 @@ function checkInteraction() {
       tool.userData.outline.material.opacity = 0
     }
   })
+
+// ── Panel eléctrico ──
+  checkHandNearPanel(leftWorldPos, rightWorldPos)
 
   // Actualizar HUD con indicación de interacción
   // const hudBtn = document.getElementById('btn-next')
