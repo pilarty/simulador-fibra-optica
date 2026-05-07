@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instalación de Conectores SC/APC</title>
+  <link rel="stylesheet" href="conectores.css">
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<a id="back-btn" href="/index.html">← MENÚ</a>
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<!-- HUD de controles -->
+<div style="position: fixed; top: 80px; left: 16px; z-index: 100; background: rgba(4,8,15,0.88); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; backdrop-filter: blur(6px); font-family: 'Share Tech Mono', monospace; font-size: 10px; line-height: 1.8; color: var(--dim);">
+  <div style="color: var(--blue); font-weight: bold; margin-bottom: 6px; letter-spacing: 2px;">CONTROLES</div>
+  <div><span style="color: var(--accent);">CLICK</span> → Bloquear mouse</div>
+  <div><span style="color: var(--accent);">MOUSE</span> → Mirar</div>
+  <div><span style="color: var(--green);">WASD</span> → Mover jugador</div>
+  <div><span style="color: var(--text); font-weight: bold;">ESPACIO</span> → Saltar</div>
+  <div><span style="color: var(--dim);">Shift/Ctrl</span> → Volar arriba/abajo (noclip)</div>
+  <div><span style="color: var(--blue);">IJKL</span> → Mano izq. (U/O arriba/abajo)</div>
+  <div><span style="color: var(--accent2);">FLECHAS</span> → Mano der. (PgUp/PgDn arriba/abajo)</div>
+  <div><span style="color: var(--green);">E</span> → Interactuar con herramientas</div>
+</div>
+
+<!-- Feedback overlay -->
+<div id="feedback">
+  <div class="feedback-box">
+    <div class="feedback-icon" id="fb-icon">✅</div>
+    <div class="feedback-title" id="fb-title">¡Correcto!</div>
+    <div class="feedback-msg" id="fb-msg">Paso completado correctamente.</div>
+    <button class="btn btn-primary" id="fb-btn">Continuar →</button>
+  </div>
+</div>
+
+<!-- Pantalla de completado -->
+<div id="complete-screen">
+  <div class="complete-glow">🏆</div>
+  <div class="complete-title">¡Proceso Completado!</div>
+  <div class="complete-sub">
+    Instalaste correctamente un conector <strong>SC/APC</strong> (verde, 8°).<br>
+    El enlace está listo para ser certificado con OTDR o medidor de potencia.
+  </div>
+  <div class="complete-actions">
+    <button class="btn btn-primary" onclick="restartSim()">↺ Repetir</button>
+    <a class="btn btn-secondary" href="/index.html">← Menú</a>
+  </div>
+</div>
+
+<script type="module" src="conectores.js"></script>
+</body>
+</html>
