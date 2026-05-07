@@ -39,7 +39,7 @@ export function initPanelElectrico(scene) {
   const loadAbierto = new Promise((resolve) => {
     loader.load('/Modelos GLB/panel_electrico_abierto.glb', (gltf) => {
       panelAbierto = gltf.scene
-      panelAbierto.scale.set(1, 1, 1)
+      panelAbierto.scale.set(1.15, 1.15, 1.15)
       panelAbierto.position.copy(PANEL_POS)
       panelAbierto.rotation.y = Math.PI
       panelAbierto.visible = false
