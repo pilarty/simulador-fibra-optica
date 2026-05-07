@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-const PANEL_POS = new THREE.Vector3(-3.56, 33.15, -1.5)
+const PANEL_POS = new THREE.Vector3(-3.56, 33.15, -0.88)
 const INTERACT_DIST = 1.2
 
 let panelCerrado = null
@@ -21,13 +21,14 @@ export function initPanelElectrico(scene) {
   const loadCerrado = new Promise((resolve) => {
     loader.load('/Modelos GLB/panel_electrico_cerrado.glb', (gltf) => {
       panelCerrado = gltf.scene
-      panelCerrado.scale.set(1, 1, 1)
+      panelCerrado.scale.set(1.15, 1.15, 1.15)
       panelCerrado.position.copy(PANEL_POS)
       panelCerrado.rotation.y = Math.PI
       panelCerrado.traverse(c => {
         if (c.isMesh) { c.castShadow = true; c.receiveShadow = true }
       })
       scene.add(panelCerrado)
+      console.log('✓ Panel cerrado cargado en', PANEL_POS)
       checkReady()
       resolve()
     }, undefined, () => {
@@ -47,6 +48,7 @@ export function initPanelElectrico(scene) {
         if (c.isMesh) { c.castShadow = true; c.receiveShadow = true }
       })
       scene.add(panelAbierto)
+      console.log('✓ Panel abierto cargado en', PANEL_POS)
       checkReady()
       resolve()
     }, undefined, () => {

@@ -1,7 +1,6 @@
 import { loadBuilding } from './building.js'
 import { loadTable } from './table.js'
 import { loadCableFibra } from './cable-fibra.js'
-import { loadPanelPared } from './panel-pared.js'
 import { loadHands } from './hands.js'
 import { initCable, updateCable, checkHandNearCable, agarrarCable, soltarCable, mostrarCable } from './cable.js'
 import { initPanelElectrico, checkHandNearPanel, swapPanelElectrico } from './panelElectrico.js'
@@ -18,7 +17,6 @@ export async function setupAllModels(scene, leftHandGroup, rightHandGroup, colli
     loadBuilding(scene, collisionObjects),
     loadTable(scene, collisionObjects),
     loadCableFibra(scene),
-    loadPanelPared(scene),
     loadHands(scene, leftHandGroup, rightHandGroup)
   ])
 
