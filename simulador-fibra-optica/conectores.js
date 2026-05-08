@@ -85,8 +85,8 @@ const rightHandGroup = new THREE.Group()
 camera.add(leftHandGroup)
 camera.add(rightHandGroup)
 
-leftHandGroup.position.set(-0.15, -0.25, -0.6)
-rightHandGroup.position.set(0.15, -0.25, -0.6)
+leftHandGroup.position.set(-0.22, -0.25, -0.6)
+rightHandGroup.position.set(0.22, -0.25, -0.6)
 
 // Iluminación fotorrealista
 scene.add(new THREE.AmbientLight(LIGHTING.ambientLight.color, LIGHTING.ambientLight.intensity))
@@ -147,17 +147,17 @@ setupAllModels(scene, leftHandGroup, rightHandGroup, collisionObjects).then((mod
     const centerZ = (minZ + maxZ) / 2
     
     const wallGeom = new THREE.BoxGeometry(width, height, depth)
-    const wallMat = new THREE.MeshStandardMaterial({
+    const wallMat = new THREE.MeshBasicMaterial({
       color: 0xff0000,
-      roughness: 0.8,
-      metalness: 0.1,
       transparent: true,
-      opacity: 0
+      opacity: 0,
+      depthWrite: false,
+      colorWrite: false
     })
     const wall = new THREE.Mesh(wallGeom, wallMat)
     wall.position.set(centerX, centerY, centerZ)
-    wall.castShadow = true
-    wall.receiveShadow = true
+    wall.castShadow = false
+    wall.receiveShadow = false
     scene.add(wall)
     wallColliders.push(wall)
     wallVisuals.push(wall)
@@ -228,6 +228,68 @@ const toolMap = {
   'inspector': inspector
 }
 
+const HAND_TOOL_OFFSETS = {
+  default: {
+    position: new THREE.Vector3(0.06, -0.02, -0.04),
+    rotation: new THREE.Euler(0.3, -0.8, -0.1),
+    scale: 1.05
+  }
+}
+
+const rightHandToolSlot = new THREE.Group()
+rightHandGroup.add(rightHandToolSlot)
+
+let equippedTool = null
+let equippedToolView = null
+
+function clearEquippedToolView() {
+  if (!equippedToolView) return
+  rightHandToolSlot.remove(equippedToolView)
+  equippedToolView.traverse((child) => {
+    if (!child.isMesh) return
+    if (Array.isArray(child.material)) {
+      child.material.forEach((mat) => mat?.dispose?.())
+    } else {
+      child.material?.dispose?.()
+    }
+  })
+  equippedToolView = null
+}
+
+function unequipTool() {
+  if (!equippedTool) return
+  equippedTool.visible = true
+  equippedTool.userData.isEquipped = false
+  clearEquippedToolView()
+  equippedTool = null
+}
+
+function equipTool(tool) {
+  if (!tool) return
+  if (equippedTool === tool) return
+
+  if (equippedTool) {
+    unequipTool()
+  }
+
+  const viewMesh = new THREE.Mesh(tool.geometry.clone(), tool.material.clone())
+  viewMesh.castShadow = false
+  viewMesh.receiveShadow = false
+  viewMesh.renderOrder = 998
+
+  const offset = HAND_TOOL_OFFSETS[tool.userData.toolName] || HAND_TOOL_OFFSETS.default
+  viewMesh.position.copy(offset.position)
+  viewMesh.rotation.copy(offset.rotation)
+  viewMesh.scale.setScalar(offset.scale)
+
+  rightHandToolSlot.add(viewMesh)
+  equippedToolView = viewMesh
+
+  tool.visible = false
+  tool.userData.isEquipped = true
+  equippedTool = tool
+}
+
 // Partículas de brillo (para feedback OK)
 const particleCount = 80
 const particleGeo = new THREE.BufferGeometry()
@@ -266,8 +328,11 @@ window.addEventListener('keydown', e => {
   }
   if (e.code === 'KeyE') {
     e.preventDefault()
-    if (document.getElementById('steps-panel')) {
-      // Interfaz disponible - usar controles UI
+    if (canInteract && nearbyTool) {
+      equipTool(nearbyTool)
+      performInteraction()
+    } else if (equippedTool) {
+      unequipTool()
     }
   }
   if (e.code === 'Digit1') {
@@ -317,8 +382,8 @@ debugPanel.innerHTML = `
 document.body.appendChild(debugPanel)
 
 // Posiciones de las manos
-const leftBase = new THREE.Vector3(-0.15, -0.25, -0.6)
-const rightBase = new THREE.Vector3(0.15, -0.25, -0.6)
+const leftBase = new THREE.Vector3(-0.22, -0.25, -0.6)
+const rightBase = new THREE.Vector3(0.22, -0.25, -0.6)
 const leftPos = leftBase.clone()
 const rightPos = rightBase.clone()
 
@@ -361,7 +426,9 @@ function updateScene() {
   // Hacer solo la herramienta del paso actual interactuable
   tools.forEach(tool => {
     tool.userData.interactable = (tool.userData.toolName === s.tool)
-    tool.userData.outline.material.opacity = 0
+    if (tool.visible) {
+      tool.userData.outline.material.opacity = 0
+    }
   })
 
   // Resaltar herramienta activa con luz pulsante
@@ -388,7 +455,7 @@ function checkInteraction() {
 
   // Verificar cada herramienta
   tools.forEach(tool => {
-    if (!tool.userData.interactable) {
+    if (!tool.visible || !tool.userData.interactable) {
       tool.userData.outline.material.opacity = 0
       return
     }
@@ -447,6 +514,7 @@ function triggerParticles() {
 }
 
 function advanceStep() {
+  unequipTool()
   currentStep++
   if (currentStep >= STEPS.length) {
     document.getElementById('progress-fill').style.width = '100%'
@@ -459,16 +527,9 @@ function advanceStep() {
   updateScene()
 }
 
-// Interacción con tecla E
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'KeyE' && canInteract && nearbyTool) {
-    performInteraction()
-  }
-})
-
 function performInteraction() {
   const correctTool = STEPS[currentStep].tool
-  if (nearbyTool.userData.toolName === correctTool) {
+  if (equippedTool && equippedTool.userData.toolName === correctTool) {
     const success = Math.random() > 0.15
     showFeedback(success)
   }
@@ -476,6 +537,7 @@ function performInteraction() {
 
 // Restart
 window.restartSim = () => {
+  unequipTool()
   currentStep = 0
   const complete = document.getElementById('complete-screen')
   if (complete) complete.classList.remove('visible')
@@ -585,7 +647,7 @@ function animate() {
   if (keys['KeyU']) leftPos.y -= PHYSICS.handSpeed * 0.8
   if (keys['KeyO']) leftPos.y += PHYSICS.handSpeed * 0.8
 
-  leftPos.x = Math.max(-0.5, Math.min(0.3, leftPos.x))
+  leftPos.x = Math.max(-0.55, Math.min(-0.02, leftPos.x))
   leftPos.y = Math.max(-0.6, Math.min(0.1, leftPos.y))
   leftPos.z = Math.max(-1.2, Math.min(-0.1, leftPos.z))
 
@@ -597,7 +659,7 @@ function animate() {
   if (keys['PageDown']) rightPos.y -= PHYSICS.handSpeed * 0.8
   if (keys['PageUp']) rightPos.y += PHYSICS.handSpeed * 0.8
 
-  rightPos.x = Math.max(-0.3, Math.min(0.5, rightPos.x))
+  rightPos.x = Math.max(0.02, Math.min(0.55, rightPos.x))
   rightPos.y = Math.max(-0.6, Math.min(0.1, rightPos.y))
   rightPos.z = Math.max(-1.2, Math.min(-0.1, rightPos.z))
 
@@ -646,6 +708,8 @@ function animate() {
   }
 
   wallVisuals.forEach(wall => {
+    wall.material.colorWrite = debugMode
+    wall.material.depthWrite = debugMode
     wall.material.opacity = debugMode ? 0.6 : 0
   })
 

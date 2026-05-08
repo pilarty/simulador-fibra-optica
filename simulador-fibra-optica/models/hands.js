@@ -10,7 +10,34 @@ export function loadHands(scene, leftHandGroup, rightHandGroup) {
       const hands = gltf.scene
       hands.traverse(child => {
         if (child.isMesh) {
-          child.castShadow = true
+          child.castShadow = false
+          child.receiveShadow = false
+          child.frustumCulled = false
+          child.renderOrder = 999
+
+          const materials = Array.isArray(child.material) ? child.material : [child.material]
+          materials.forEach((material) => {
+            if (!material) return
+            // For FPS viewmodels we force an opaque material setup to avoid
+            // semi-transparent artifacts coming from GLB alpha settings.
+            material.transparent = false
+            material.opacity = 1
+            material.alphaTest = 0
+            material.alphaMap = null
+            material.blending = THREE.NormalBlending
+            material.side = THREE.DoubleSide
+            if ('vertexColors' in material) material.vertexColors = false
+            material.depthTest = false
+            material.depthWrite = false
+            if ('transmission' in material) material.transmission = 0
+            if ('thickness' in material) material.thickness = 0
+            if ('attenuationDistance' in material) material.attenuationDistance = Infinity
+            if ('metalness' in material) material.metalness = 0
+            if ('roughness' in material) material.roughness = 0.95
+            if ('envMapIntensity' in material) material.envMapIntensity = 0
+            if ('emissiveIntensity' in material) material.emissiveIntensity = 0
+            material.needsUpdate = true
+          })
         }
       })
 

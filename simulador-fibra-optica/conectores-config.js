@@ -143,7 +143,7 @@ export const SCENE_CONFIG = {
   fogNear: 30,
   fogFar: 100,
   backgroundColor: 0x87ceeb,
-  cameraNear: 0.01,
+  cameraNear: 0.05,
   cameraFar: 100,
   cameraFOV: 70
 }

@@ -12,12 +12,14 @@ import { initPanelElectrico, checkHandNearPanel, swapPanelElectrico } from './pa
 export async function setupAllModels(scene, leftHandGroup, rightHandGroup, collisionObjects) {
   console.log('📦 Iniciando carga de modelos...')
 
-  // Cargar modelos GLB en paralelo
+  // Priorizar manos para mostrar feedback visual rápido al iniciar.
+  await loadHands(scene, leftHandGroup, rightHandGroup)
+
+  // Cargar resto de modelos GLB en paralelo
   await Promise.all([
     loadBuilding(scene, collisionObjects),
     loadTable(scene, collisionObjects),
-    loadCableFibra(scene),
-    loadHands(scene, leftHandGroup, rightHandGroup)
+    loadCableFibra(scene)
   ])
 
   // Inicializar módulos interactivos
