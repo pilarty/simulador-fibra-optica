@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>VR Demo — Fibra Óptica</title>
+    <style>
+      body { margin: 0; background: #1a1a2e; }
+      #back-btn {
+        position: fixed;
+        top: 16px; right: 16px;
+        z-index: 999;
+        background: rgba(8,15,28,0.85);
+        border: 1px solid #1a2a45;
+        color: #00d4ff;
+        font-family: 'Share Tech Mono', monospace, sans-serif;
+        font-size: 12px;
+        letter-spacing: 2px;
+        padding: 8px 16px;
+        cursor: pointer;
+        text-decoration: none;
+        border-radius: 3px;
+        transition: background 0.2s, border-color 0.2s;
+      }
+      #back-btn:hover { background: rgba(0,212,255,0.1); border-color: #00d4ff; }
+    </style>
+  </head>
+  <body>
+    <a id="back-btn" href="/index.html">← MENÚ</a>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
