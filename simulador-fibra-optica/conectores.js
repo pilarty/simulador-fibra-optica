@@ -1,8 +1,11 @@
 import * as THREE from 'three'
-import { setupAllModels } from './models/index.js'
 import { STEPS, PHYSICS, LIGHTING, SCENE_CONFIG, MODEL_SCALES, TOOL_COLORS } from './conectores-config.js'
-import { updateCable, checkHandNearCable } from './models/cable.js'
-import { checkHandNearPanel, swapPanelElectrico } from './models/panelElectrico.js'
+import { loadBuilding } from './models/building.js'
+import { loadTable } from './models/table.js'
+import { loadCableFibra } from './models/cable-fibra.js'
+import { loadHands } from './models/hands.js'
+import { initCable, updateCable, checkHandNearCable } from './models/cable.js'
+import { initPanelElectrico, checkHandNearPanel, swapPanelElectrico } from './models/panelElectrico.js'
 
 // ─────────────────────────────────────────────
 // THREE.JS — Escena 3D
@@ -133,7 +136,14 @@ const wallColliders = []
 const wallVisuals = []
 
 // Promesas de carga de modelos
-setupAllModels(scene, leftHandGroup, rightHandGroup, collisionObjects).then((modelFuncs) => {
+Promise.all([
+  loadBuilding(scene, collisionObjects),
+  loadTable(scene, collisionObjects),
+  loadCableFibra(scene),
+  loadHands(scene, leftHandGroup, rightHandGroup)
+]).then(async () => {
+  await initCable(scene, rightHandGroup)
+  await initPanelElectrico(scene)
   console.log('✓ Todos los modelos cargados exitosamente')
   
   // Crear paredes personalizadas con collisión

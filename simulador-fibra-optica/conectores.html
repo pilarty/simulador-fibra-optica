@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Instalación de Conectores SC/APC</title>
+  <title>Instalación de conectores</title>
   <link rel="stylesheet" href="conectores.css">
 </head>
 <body>
@@ -25,30 +25,6 @@
   <div><span style="color: var(--blue);">IJKL</span> → Mano izq. (U/O arriba/abajo)</div>
   <div><span style="color: var(--accent2);">FLECHAS</span> → Mano der. (PgUp/PgDn arriba/abajo)</div>
   <div><span style="color: var(--green);">E</span> → Interactuar con herramientas</div>
-</div>
-
-<!-- Feedback overlay -->
-<div id="feedback">
-  <div class="feedback-box">
-    <div class="feedback-icon" id="fb-icon">✅</div>
-    <div class="feedback-title" id="fb-title">¡Correcto!</div>
-    <div class="feedback-msg" id="fb-msg">Paso completado correctamente.</div>
-    <button class="btn btn-primary" id="fb-btn">Continuar →</button>
-  </div>
-</div>
-
-<!-- Pantalla de completado -->
-<div id="complete-screen">
-  <div class="complete-glow">🏆</div>
-  <div class="complete-title">¡Proceso Completado!</div>
-  <div class="complete-sub">
-    Instalaste correctamente un conector <strong>SC/APC</strong> (verde, 8°).<br>
-    El enlace está listo para ser certificado con OTDR o medidor de potencia.
-  </div>
-  <div class="complete-actions">
-    <button class="btn btn-primary" onclick="restartSim()">↺ Repetir</button>
-    <a class="btn btn-secondary" href="/index.html">← Menú</a>
-  </div>
 </div>
 
 <script type="module" src="conectores.js"></script>
