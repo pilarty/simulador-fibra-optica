@@ -4,8 +4,8 @@ import { loadBuilding } from './models/building.js'
 import { loadTable } from './models/table.js'
 import { loadCableFibra } from './models/cable-fibra.js'
 import { loadHands } from './models/hands.js'
-import { initCable, updateCable, checkHandNearCable } from './models/cable.js'
 import { initPanelElectrico, checkHandNearPanel, swapPanelElectrico } from './models/panelElectrico.js'
+import { initCable } from './models/cable.js'
 
 // ─────────────────────────────────────────────
 // RENDERER Y ESCENA
@@ -119,7 +119,7 @@ Promise.all([
   loadCableFibra(scene),
   loadHands(scene, leftHandGroup, rightHandGroup)
 ]).then(async () => {
-  await initCable(scene, rightHandGroup)
+  await initCable(scene)
   await initPanelElectrico(scene)
   console.log('✓ Todos los modelos cargados exitosamente')
 
@@ -171,6 +171,7 @@ window.addEventListener('keydown', e => {
   }
   if (e.code === 'KeyE') {
     e.preventDefault()
+    swapPanelElectrico()
   }
   if (e.code === 'Digit1') {
     const pos = `X=${playerGroup.position.x.toFixed(2)} Y=${playerGroup.position.y.toFixed(2)} Z=${playerGroup.position.z.toFixed(2)}`
@@ -307,6 +308,13 @@ function animate() {
   rightHandGroup.position.lerp(rightPos, 0.2)
   leftHandGroup.rotation.z  =  (leftPos.x  - leftBase.x)  * 0.5
   rightHandGroup.rotation.z = -(rightPos.x - rightBase.x) * 0.5
+
+  // Detección de proximidad
+  const leftWorldPos = new THREE.Vector3()
+  const rightWorldPos = new THREE.Vector3()
+  leftHandGroup.getWorldPosition(leftWorldPos)
+  rightHandGroup.getWorldPosition(rightWorldPos)
+  checkHandNearPanel(leftWorldPos, rightWorldPos)
 
   // Cámara
   camera.position.copy(playerGroup.position)

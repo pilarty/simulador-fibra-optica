@@ -40,8 +40,8 @@ export function initPanelElectrico(scene) {
   const loadAbierto = new Promise((resolve) => {
     loader.load('/Modelos GLB/panel_electrico_abierto.glb', (gltf) => {
       panelAbierto = gltf.scene
-      panelAbierto.scale.set(1.15, 1.15, 1.15)
-      panelAbierto.position.copy(PANEL_POS)
+      panelAbierto.scale.set(1.3, 1.3, 1.3)
+      panelAbierto.position.set(PANEL_POS.x, PANEL_POS.y, PANEL_POS.z - 0.6)
       panelAbierto.rotation.y = Math.PI
       panelAbierto.visible = false
       panelAbierto.traverse(c => {
@@ -61,7 +61,7 @@ export function initPanelElectrico(scene) {
 }
 
 export function swapPanelElectrico() {
-  if (!panelElectricoLoaded || panelSwapping) return
+  if (!panelElectricoLoaded || panelSwapping || !handNearPanelElectrico) return
   panelSwapping = true
 
   if (panelEstado === 'cerrado') {
@@ -74,8 +74,8 @@ export function swapPanelElectrico() {
     panelEstado = 'cerrado'
   }
 
-  setTimeout(() => { panelSwapping = false }, 600)
-}
+    setTimeout(() => { panelSwapping = false }, 600)
+  }
 
 export function checkHandNearPanel(leftWorldPos, rightWorldPos) {
   handNearPanelElectrico = Math.min(
