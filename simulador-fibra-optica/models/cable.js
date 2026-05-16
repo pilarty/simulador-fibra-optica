@@ -1,32 +1,48 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { MODEL_PATHS, MODEL_SCALES } from '../conectores-config.js'
 
-const CABLE_POS = new THREE.Vector3(-1.72, 33.15, -2.10)
+const PANEL_POS = new THREE.Vector3(-3.56, 33.15, -0.88)
+const CABLE_OFFSET = -0.1
 
-let cableModel = null
+const gltfLoader = new GLTFLoader()
+let cableObject = null
 
 export function initCable(scene) {
   return new Promise((resolve) => {
-    const loader = new GLTFLoader()
-    loader.load('/Modelos GLB/cable.glb', (gltf) => {
-      cableModel = gltf.scene
-      cableModel.scale.set(1, 1, 1)
-      cableModel.position.copy(CABLE_POS)
-      cableModel.visible = false
-      cableModel.traverse(c => {
-        if (c.isMesh) { c.castShadow = true; c.receiveShadow = true }
+    gltfLoader.load(MODEL_PATHS.cable, (gltf) => {
+      cableObject = gltf.scene
+      cableObject.scale.set(MODEL_SCALES.cable.x, MODEL_SCALES.cable.y, MODEL_SCALES.cable.z)
+      cableObject.position.set(PANEL_POS.x, PANEL_POS.y, PANEL_POS.z + CABLE_OFFSET)
+      cableObject.rotation.set(Math.PI / 2, 0, Math.PI / 2)
+      cableObject.visible = false
+      cableObject.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true
+          child.receiveShadow = true
+        }
       })
-      scene.add(cableModel)
-      console.log('✓ Cable GLB cargado')
+      scene.add(cableObject)
+      console.log('✓ Cable cargado en posición del panel eléctrico')
       resolve()
-    }, undefined, (err) => {
-      console.error('✗ Error cargando cable:', err)
+    }, undefined, (error) => {
+      console.error('✗ Error cargando cable:', error)
       resolve()
     })
   })
 }
 
-export function mostrarCable(visible) {
-  if (!cableModel) return
-  cableModel.visible = visible
+export function setCableVisible(visible) {
+  if (cableObject) cableObject.visible = visible
 }
+
+export function setCablePosition(position) {
+  if (cableObject) cableObject.position.copy(position)
+}
+
+export function getCableWorldPosition(target) {
+  if (!cableObject) return false
+  cableObject.getWorldPosition(target)
+  return true
+}
+

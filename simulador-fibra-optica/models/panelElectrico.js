@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { setCableVisible } from './cable.js'
 
 const PANEL_POS = new THREE.Vector3(-3.56, 33.15, -0.88)
 const INTERACT_DIST = 1.2
@@ -68,14 +69,16 @@ export function swapPanelElectrico() {
     panelCerrado.visible = false
     panelAbierto.visible = true
     panelEstado = 'abierto'
+    setCableVisible(true)
   } else {
     panelAbierto.visible = false
     panelCerrado.visible = true
     panelEstado = 'cerrado'
+    setCableVisible(false)
   }
 
-    setTimeout(() => { panelSwapping = false }, 600)
-  }
+  setTimeout(() => { panelSwapping = false }, 600)
+}
 
 export function checkHandNearPanel(leftWorldPos, rightWorldPos) {
   handNearPanelElectrico = Math.min(

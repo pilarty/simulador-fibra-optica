@@ -1,11 +1,11 @@
 import * as THREE from 'three'
-import { PHYSICS, LIGHTING, SCENE_CONFIG } from './conectores-config.js'
+import { LIGHTING, PHYSICS, SCENE_CONFIG } from './conectores-config.js'
 import { loadBuilding } from './models/building.js'
-import { loadTable } from './models/table.js'
 import { loadCableFibra } from './models/cable-fibra.js'
+import { getCableWorldPosition, initCable, setCablePosition } from './models/cable.js'
 import { loadHands } from './models/hands.js'
-import { initPanelElectrico, checkHandNearPanel, swapPanelElectrico } from './models/panelElectrico.js'
-import { initCable } from './models/cable.js'
+import { checkHandNearPanel, initPanelElectrico, swapPanelElectrico } from './models/panelElectrico.js'
+import { loadTable } from './models/table.js'
 
 // ─────────────────────────────────────────────
 // RENDERER Y ESCENA
@@ -46,6 +46,8 @@ const leftBase = new THREE.Vector3(-0.15, -0.25, -0.6)
 const rightBase = new THREE.Vector3(0.15, -0.25, -0.6)
 const leftPos = leftBase.clone()
 const rightPos = rightBase.clone()
+const leftWorldPos = new THREE.Vector3()
+const rightWorldPos = new THREE.Vector3()
 
 // ─────────────────────────────────────────────
 // ILUMINACIÓN
@@ -161,6 +163,12 @@ document.addEventListener('mousemove', e => {
 
 const keys = {}
 let debugMode = false
+let cableAttached = false
+let cableAttachedHand = null
+let cableAttachOffset = new THREE.Vector3()
+let cableCandidateHand = null
+const CABLE_ATTACH_KEY = 'KeyG'
+const CABLE_ATTACH_DIST = 1.2
 
 window.addEventListener('keydown', e => {
   keys[e.code] = true
@@ -185,6 +193,27 @@ window.addEventListener('keydown', e => {
     }
     posDiv.textContent = pos
   }
+  if (e.code === CABLE_ATTACH_KEY) {
+    if (!cableAttached && cableCandidateHand) {
+      cableAttached = true
+      cableAttachedHand = cableCandidateHand
+      const handPos = cableAttachedHand === 'left' ? leftWorldPos.clone() : rightWorldPos.clone()
+      const cableWorldPos = new THREE.Vector3()
+      if (getCableWorldPosition(cableWorldPos)) {
+        cableAttachOffset.copy(cableWorldPos).sub(handPos)
+      } else {
+        cableAttachOffset.set(0, 0, 0)
+      }
+      console.log('G pressed: Cable enganchado a mano', cableAttachedHand)
+    } else if (!cableAttached) {
+      console.log('G pressed: mano no está cerca del cable o cable no visible')
+    } else {
+      cableAttached = false
+      cableAttachedHand = null
+      console.log('G pressed: cable liberado')
+    }
+  }
+
   if (e.code === 'Digit2') {
     debugMode = !debugMode
   }
@@ -310,10 +339,25 @@ function animate() {
   rightHandGroup.rotation.z = -(rightPos.x - rightBase.x) * 0.5
 
   // Detección de proximidad
-  const leftWorldPos = new THREE.Vector3()
-  const rightWorldPos = new THREE.Vector3()
   leftHandGroup.getWorldPosition(leftWorldPos)
   rightHandGroup.getWorldPosition(rightWorldPos)
+
+  const cableWorldPos = new THREE.Vector3()
+  if (getCableWorldPosition(cableWorldPos)) {
+    const leftDist = leftWorldPos.distanceTo(cableWorldPos)
+    const rightDist = rightWorldPos.distanceTo(cableWorldPos)
+    const nearestDist = Math.min(leftDist, rightDist)
+    cableCandidateHand = nearestDist < CABLE_ATTACH_DIST ? (leftDist <= rightDist ? 'left' : 'right') : null
+  } else {
+    cableCandidateHand = null
+  }
+
+  if (cableAttached && cableAttachedHand) {
+    const handPos = cableAttachedHand === 'left' ? leftWorldPos : rightWorldPos
+    const targetPos = handPos.clone().add(cableAttachOffset)
+    setCablePosition(targetPos)
+  }
+
   checkHandNearPanel(leftWorldPos, rightWorldPos)
 
   // Cámara
