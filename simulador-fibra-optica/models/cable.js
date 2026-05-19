@@ -2,8 +2,8 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MODEL_PATHS, MODEL_SCALES } from '../conectores-config.js'
 
-const PANEL_POS = new THREE.Vector3(-3.56, 33.15, -0.88)
-const CABLE_OFFSET = -0.1
+const PANEL_POS = new THREE.Vector3(-3.005, 33.25, -0.88)
+const CABLE_OFFSET = -1
 
 const gltfLoader = new GLTFLoader()
 let cableObject = null
@@ -45,4 +45,16 @@ export function getCableWorldPosition(target) {
   cableObject.getWorldPosition(target)
   return true
 }
+
+// Offset desde el origen del modelo hasta la punta donde se puede colocar otro objeto.
+export const CABLE_TIP_OFFSET = new THREE.Vector3(0, 0, -0.6)
+
+export function getCableTipWorldPosition(target) {
+  if (!cableObject) return false
+  const local = CABLE_TIP_OFFSET.clone()
+  cableObject.localToWorld(local)
+  target.copy(local)
+  return true
+}
+
 

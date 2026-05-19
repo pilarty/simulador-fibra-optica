@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { LIGHTING, PHYSICS, SCENE_CONFIG } from './conectores-config.js'
 import { loadBuilding } from './models/building.js'
 import { loadCableFibra } from './models/cable-fibra.js'
-import { getCableWorldPosition, initCable, setCablePosition } from './models/cable.js'
+import { getCableWorldPosition, initCable, setCablePosition, setCableVisible } from './models/cable.js'
 import { loadHands } from './models/hands.js'
 import { checkHandNearPanel, initPanelElectrico, swapPanelElectrico } from './models/panelElectrico.js'
 import { loadTable } from './models/table.js'
@@ -125,6 +125,7 @@ Promise.all([
   await initPanelElectrico(scene)
   console.log('✓ Todos los modelos cargados exitosamente')
 
+
   function createWall(minX, maxX, minY, maxY, minZ, maxZ) {
     const width = Math.abs(maxX - minX)
     const height = maxY - minY
@@ -166,8 +167,13 @@ let debugMode = false
 let cableAttached = false
 let cableAttachedHand = null
 let cableAttachOffset = new THREE.Vector3()
+let cableFixedPos = new THREE.Vector3()
 let cableCandidateHand = null
+let cableVisible = false
+let attachPlayerPos = new THREE.Vector3()
+let attachForward = new THREE.Vector3()
 const CABLE_ATTACH_KEY = 'KeyG'
+const CABLE_TOGGLE_KEY = 'KeyH'
 const CABLE_ATTACH_DIST = 1.2
 
 window.addEventListener('keydown', e => {
@@ -180,6 +186,11 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyE') {
     e.preventDefault()
     swapPanelElectrico()
+  }
+  if (e.code === CABLE_TOGGLE_KEY) {
+    cableVisible = !cableVisible
+    setCableVisible(cableVisible)
+    console.log(`H pressed: Cable visible = ${cableVisible}`)
   }
   if (e.code === 'Digit1') {
     const pos = `X=${playerGroup.position.x.toFixed(2)} Y=${playerGroup.position.y.toFixed(2)} Z=${playerGroup.position.z.toFixed(2)}`
@@ -201,6 +212,9 @@ window.addEventListener('keydown', e => {
       const cableWorldPos = new THREE.Vector3()
       if (getCableWorldPosition(cableWorldPos)) {
         cableAttachOffset.copy(cableWorldPos).sub(handPos)
+        cableFixedPos.copy(cableWorldPos)
+        attachPlayerPos.copy(playerGroup.position)
+        attachForward.set(-Math.sin(yaw), 0, -Math.cos(yaw))
       } else {
         cableAttachOffset.set(0, 0, 0)
       }
@@ -213,6 +227,7 @@ window.addEventListener('keydown', e => {
       console.log('G pressed: cable liberado')
     }
   }
+
 
   if (e.code === 'Digit2') {
     debugMode = !debugMode
@@ -352,9 +367,10 @@ function animate() {
     cableCandidateHand = null
   }
 
-  if (cableAttached && cableAttachedHand) {
-    const handPos = cableAttachedHand === 'left' ? leftWorldPos : rightWorldPos
-    const targetPos = handPos.clone().add(cableAttachOffset)
+  if (cableAttached) {
+    const delta = playerGroup.position.clone().sub(attachPlayerPos)
+    const forwardDelta = delta.dot(attachForward)
+    const targetPos = cableFixedPos.clone().add(attachForward.clone().multiplyScalar(forwardDelta))
     setCablePosition(targetPos)
   }
 
