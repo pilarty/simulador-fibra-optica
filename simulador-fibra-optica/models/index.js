@@ -2,6 +2,7 @@ import { loadBuilding } from './building.js'
 import { loadTable } from './table.js'
 import { loadCableFibra } from './cable-fibra.js'
 import { loadHands } from './hands.js'
+import { loadGlovesOnTable, equipGloves, unequipGloves, getIsWearingGloves, getGlovesModel } from './gloves.js'
 import { initCable, updateCable, checkHandNearCable, agarrarCable, soltarCable, mostrarCable } from './cable.js'
 import { initPanelElectrico, checkHandNearPanel, swapPanelElectrico } from './panelElectrico.js'
 
@@ -19,7 +20,8 @@ export async function setupAllModels(scene, leftHandGroup, rightHandGroup, colli
   await Promise.all([
     loadBuilding(scene, collisionObjects),
     loadTable(scene, collisionObjects),
-    loadCableFibra(scene)
+    loadCableFibra(scene),
+    loadGlovesOnTable(scene, collisionObjects)
   ])
 
   // Inicializar módulos interactivos
@@ -35,6 +37,10 @@ export async function setupAllModels(scene, leftHandGroup, rightHandGroup, colli
     soltarCable,
     mostrarCable,
     checkHandNearPanel,
-    swapPanelElectrico
+    swapPanelElectrico,
+    equipGloves: () => equipGloves(leftHandGroup, rightHandGroup),
+    unequipGloves,
+    getIsWearingGloves,
+    getGlovesModel
   }
 }

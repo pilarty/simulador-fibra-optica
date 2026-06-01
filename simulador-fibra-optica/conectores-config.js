@@ -108,7 +108,8 @@ export const MODEL_PATHS = {
   table: '/Modelos GLB/metal_table_asset.glb',
   cableFibra: '/Modelos GLB/custom_5g_fiber_cable.glb',
   panelPared: '/Modelos GLB/panelPared.glb',
-  hands: '/Modelos GLB/hand-arm.glb'
+  hands: '/Modelos GLB/hand-arm.glb',
+  gloves: '/Modelos GLB/interlocking_gloved_hands.glb'
 }
 
 // Configuración de física

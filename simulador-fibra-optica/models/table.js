@@ -8,8 +8,9 @@ export function loadTable(scene, collisionObjects) {
   return new Promise((resolve) => {
     gltfLoader.load(MODEL_PATHS.table, (gltf) => {
       const table = gltf.scene
-      table.scale.set(MODEL_SCALES.table.x, MODEL_SCALES.table.y, MODEL_SCALES.table.z)
-      table.position.set(12, 1, -14)
+      table.scale.set(1.8, 1.8, 1.8)
+      // Posicionar según especificaciones
+      table.position.set(2, 31.57, -13)
       table.traverse(child => {
         if (child.isMesh) {
           child.castShadow = true
@@ -18,7 +19,7 @@ export function loadTable(scene, collisionObjects) {
         }
       })
       scene.add(table)
-      console.log('✓ Mesa cargada')
+      console.log('✓ Mesa cargada en posición elevada')
       resolve()
     }, undefined, (error) => {
       console.error('✗ Error cargando mesa:', error)

@@ -132,9 +132,17 @@ const collisionObjects = []
 const wallColliders = []
 const wallVisuals = []
 
+// Variable global para acceder a la función de guantes
+let equipGlovesFunc = null
+let getGlovesModelFunc = null
+
 // Promesas de carga de modelos
 setupAllModels(scene, leftHandGroup, rightHandGroup, collisionObjects).then((modelFuncs) => {
   console.log('✓ Todos los modelos cargados exitosamente')
+  
+  // Guardar función de equipar guantes y obtener modelo
+  equipGlovesFunc = modelFuncs.equipGloves
+  getGlovesModelFunc = modelFuncs.getGlovesModel
   
   // Crear paredes personalizadas con collisión
   function createWall(minX, maxX, minY, maxY, minZ, maxZ) {
@@ -169,7 +177,30 @@ setupAllModels(scene, leftHandGroup, rightHandGroup, collisionObjects).then((mod
   createWall(-5.55, -5.45, 30.16, 34.16, -0.71, -9.40)
   createWall(-5.55, -1.08, 30.16, 34.16, -0.76, -0.66)
   createWall(-5.55, -1.08, 30.16, 34.16, -9.45, -9.35)
+  
+  // Crear helpers para objetos interactuables
+  createInteractableHelpers()
 })
+
+// Función para crear BoxHelpers para objetos interactuables
+function createInteractableHelpers() {
+  // Limpiar helpers existentes
+  interactableHelpers.forEach(helper => scene.remove(helper))
+  interactableHelpers.length = 0
+  
+  // Crear helpers para objetos con userData.interactable o userData.isGloves
+  collisionObjects.forEach(obj => {
+    if (obj.userData.interactable || obj.userData.isGloves) {
+      const box = new THREE.Box3().setFromObject(obj)
+      const helper = new THREE.Box3Helper(box, 0x00ff88)
+      helper.visible = false
+      scene.add(helper)
+      interactableHelpers.push({ helper, object: obj })
+    }
+  })
+  
+  console.log(`✓ Creados ${interactableHelpers.length} helpers para objetos interactuables`)
+}
 
 // ── Herramientas y objetos 3D ──
 
@@ -303,9 +334,60 @@ scene.add(particles)
 
 // ── Controles ──
 
-// Pointer lock para mirar con el mouse
-canvas.addEventListener('click', () => {
-  canvas.requestPointerLock()
+// Pointer lock para mirar con el mouse y detectar click en guantes
+canvas.addEventListener('click', (event) => {
+  // Si ya está en pointer lock, no hacer raycasting
+  if (document.pointerLockElement === canvas) {
+    return
+  }
+  
+  console.log('🖱️ Click detectado (sin pointer lock)')
+  
+  // Raycaster para detectar click en guantes
+  const rect = canvas.getBoundingClientRect()
+  const mouse = new THREE.Vector2()
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+  
+  console.log(`📍 Coordenadas mouse: x=${mouse.x.toFixed(2)}, y=${mouse.y.toFixed(2)}`)
+  
+  const raycaster = new THREE.Raycaster()
+  raycaster.setFromCamera(mouse, camera)
+  
+  // Verificar intersección con todos los objetos (incluyendo guantes)
+  const allObjects = [...collisionObjects]
+  const glovesModel = getGlovesModelFunc ? getGlovesModelFunc() : null
+  if (glovesModel) {
+    allObjects.push(glovesModel)
+  }
+  
+  const intersects = raycaster.intersectObjects(allObjects, true)
+  
+  console.log(`🎯 Intersecciones encontradas: ${intersects.length}`)
+  
+  let clickedGloves = false
+  for (const intersect of intersects) {
+    console.log(`   - Objeto: ${intersect.object.type}, isGloves: ${intersect.object.userData.isGloves}, distancia: ${intersect.distance.toFixed(2)}`)
+    
+    if (intersect.object.userData.isGloves) {
+      // Click en guantes detectado
+      console.log('🧤 ¡Click en guantes detectado!')
+      if (equipGlovesFunc) {
+        equipGlovesFunc()
+        console.log('✅ Guantes equipados')
+      } else {
+        console.error('❌ equipGlovesFunc no está definida')
+      }
+      clickedGloves = true
+      break
+    }
+  }
+  
+  // Si no se hizo click en los guantes, activar pointer lock
+  if (!clickedGloves) {
+    console.log('🔒 Activando pointer lock')
+    canvas.requestPointerLock()
+  }
 })
 
 document.addEventListener('mousemove', e => {
@@ -319,6 +401,30 @@ document.addEventListener('mousemove', e => {
 // Controles de teclado
 const keys = {}
 let debugMode = false
+
+// Crear crosshair central para modo debug
+const crosshair = document.createElement('div')
+crosshair.id = 'crosshair'
+crosshair.style.cssText = `
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  z-index: 300;
+  display: none;
+  pointer-events: none;
+`
+crosshair.innerHTML = `
+  <div style="position:absolute;top:50%;left:0;right:0;height:2px;background:#00ff88;transform:translateY(-50%);"></div>
+  <div style="position:absolute;left:50%;top:0;bottom:0;width:2px;background:#00ff88;transform:translateX(-50%);"></div>
+  <div style="position:absolute;top:50%;left:50%;width:6px;height:6px;background:#00ff88;border-radius:50%;transform:translate(-50%,-50%);"></div>
+`
+document.body.appendChild(crosshair)
+
+// Array para almacenar los BoxHelpers de objetos interactuables
+const interactableHelpers = []
 
 window.addEventListener('keydown', e => {
   keys[e.code] = true
@@ -349,6 +455,13 @@ window.addEventListener('keydown', e => {
   }
   if (e.code === 'Digit2') {
     debugMode = !debugMode
+    // Mostrar/ocultar crosshair
+    crosshair.style.display = debugMode ? 'block' : 'none'
+    // Mostrar/ocultar helpers de objetos interactuables
+    interactableHelpers.forEach(({ helper }) => {
+      helper.visible = debugMode
+    })
+    console.log(`Debug Mode: ${debugMode ? 'ON' : 'OFF'}`)
   }
 })
 window.addEventListener('keyup', e => keys[e.code] = false)
@@ -712,6 +825,14 @@ function animate() {
     wall.material.depthWrite = debugMode
     wall.material.opacity = debugMode ? 0.6 : 0
   })
+
+  // Actualizar helpers de objetos interactuables
+  if (debugMode) {
+    interactableHelpers.forEach(({ helper, object }) => {
+      const box = new THREE.Box3().setFromObject(object)
+      helper.box.copy(box)
+    })
+  }
 
   // Sistema de detección de interacción
   checkInteraction()

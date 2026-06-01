@@ -18,24 +18,37 @@ export function loadHands(scene, leftHandGroup, rightHandGroup) {
           const materials = Array.isArray(child.material) ? child.material : [child.material]
           materials.forEach((material) => {
             if (!material) return
-            // For FPS viewmodels we force an opaque material setup to avoid
-            // semi-transparent artifacts coming from GLB alpha settings.
+            
+            // Configuración mejorada para materiales opacos y sólidos
             material.transparent = false
             material.opacity = 1
             material.alphaTest = 0
             material.alphaMap = null
             material.blending = THREE.NormalBlending
-            material.side = THREE.DoubleSide
-            if ('vertexColors' in material) material.vertexColors = false
+            material.side = THREE.FrontSide // FrontSide para mejor rendimiento
+            
+            // Configuración especial para FPS viewmodels (manos en primera persona)
+            // depthTest=false evita que se crucen con el entorno
+            // depthWrite=true permite que las partes de la mano se rendericen correctamente entre sí
             material.depthTest = false
-            material.depthWrite = false
+            material.depthWrite = true
+            
+            // Desactivar efectos de transmisión/transparencia avanzados
             if ('transmission' in material) material.transmission = 0
             if ('thickness' in material) material.thickness = 0
             if ('attenuationDistance' in material) material.attenuationDistance = Infinity
+            if ('ior' in material) material.ior = 1.5
+            
+            // Configuración PBR mejorada para piel
             if ('metalness' in material) material.metalness = 0
-            if ('roughness' in material) material.roughness = 0.95
-            if ('envMapIntensity' in material) material.envMapIntensity = 0
+            if ('roughness' in material) material.roughness = 0.8 // Piel más natural (menos brillante)
+            if ('envMapIntensity' in material) material.envMapIntensity = 0.3 // Reflejo sutil
             if ('emissiveIntensity' in material) material.emissiveIntensity = 0
+            
+            // Mejorar iluminación
+            material.flatShading = false
+            if ('vertexColors' in material) material.vertexColors = false
+            
             material.needsUpdate = true
           })
         }
