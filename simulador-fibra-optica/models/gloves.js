@@ -83,11 +83,11 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
   gltfLoader.load(MODEL_PATHS.gloves, (gltf) => {
     // Guante izquierdo
     glovesLeftHand = gltf.scene.clone()
-    glovesLeftHand.scale.set(0.03, 0.03, 0.03)
-    // Prueba diferentes rotaciones - ajustables con teclado
-    glovesLeftHand.rotation.x = 0
+    glovesLeftHand.scale.set(0.01, 0.01, 0.01)
+    // Posición como las manos
+    glovesLeftHand.rotation.x = -0.3
     glovesLeftHand.rotation.y = 0
-    glovesLeftHand.rotation.z = 0
+    glovesLeftHand.rotation.z = 0.3
     glovesLeftHand.position.set(0, 0, 0)
     
     glovesLeftHand.traverse(child => {
@@ -116,11 +116,11 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
 
     // Guante derecho (espejado)
     glovesRightHand = gltf.scene.clone()
-    glovesRightHand.scale.set(-0.03, 0.03, 0.03)
-    // Prueba diferentes rotaciones - ajustables con teclado
-    glovesRightHand.rotation.x = 0
+    glovesRightHand.scale.set(-0.01, 0.01, 0.01)
+    // Posición como las manos
+    glovesRightHand.rotation.x = -0.3
     glovesRightHand.rotation.y = 0
-    glovesRightHand.rotation.z = 0
+    glovesRightHand.rotation.z = -0.3
     glovesRightHand.position.set(0, 0, 0)
     
     glovesRightHand.traverse(child => {
