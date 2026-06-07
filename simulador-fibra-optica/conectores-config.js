@@ -109,7 +109,8 @@ export const MODEL_PATHS = {
   cableFibra: '/Modelos GLB/custom_5g_fiber_cable.glb',
   panelPared: '/Modelos GLB/panelPared.glb',
   hands: '/Modelos GLB/hand-arm.glb',
-  gloves: '/Modelos GLB/work_gloves.glb'
+  gloves: '/Modelos GLB/work_gloves.glb',
+  glovedHands: '/Modelos GLB/interlocking_gloved_hands.glb'
 }
 
 // Configuración de física

@@ -59,16 +59,39 @@ export function loadHands(scene, leftHandGroup, rightHandGroup) {
       leftHand.scale.set(0.01, 0.01, 0.01)
       leftHand.rotation.x = -0.3
       leftHand.rotation.z = 0.3
+      leftHand.name = 'originalLeftHand' // Identificador para ocultarla
       leftHandGroup.add(leftHand)
+      console.log('✓ Mano izquierda agregada al grupo')
+      console.log('   Meshes en mano izquierda:', leftHand.children.length)
 
       // Agregar mano derecha (espejada)
       const rightHand = hands.clone()
       rightHand.scale.set(-0.01, 0.01, 0.01)
       rightHand.rotation.x = -0.3
       rightHand.rotation.z = -0.3
+      rightHand.name = 'originalRightHand' // Identificador para ocultarla
       rightHandGroup.add(rightHand)
+      console.log('✓ Mano derecha agregada al grupo')
+      console.log('   Meshes en mano derecha:', rightHand.children.length)
 
       console.log('✓ Manos cargadas exitosamente')
+      console.log('   leftHandGroup.visible:', leftHandGroup.visible)
+      console.log('   rightHandGroup.visible:', rightHandGroup.visible)
+      console.log('   leftHand.visible:', leftHand.visible)
+      console.log('   rightHand.visible:', rightHand.visible)
+      
+      // Verificar materiales después de configuración
+      leftHand.traverse(child => {
+        if (child.isMesh) {
+          console.log('   Material leftHand:', {
+            depthTest: child.material.depthTest,
+            depthWrite: child.material.depthWrite,
+            transparent: child.material.transparent,
+            renderOrder: child.renderOrder,
+            visible: child.visible
+          })
+        }
+      })
       resolve()
     }, undefined, (error) => {
       console.error('✗ Error cargando manos:', error)

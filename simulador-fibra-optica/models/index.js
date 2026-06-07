@@ -16,13 +16,17 @@ export async function setupAllModels(scene, leftHandGroup, rightHandGroup, colli
   // Priorizar manos para mostrar feedback visual rápido al iniciar.
   await loadHands(scene, leftHandGroup, rightHandGroup)
 
-  // Cargar resto de modelos GLB en paralelo
+  // Cargar building, cable y mesa primero
   await Promise.all([
     loadBuilding(scene, collisionObjects),
-    loadTable(scene, collisionObjects),
-    loadCableFibra(scene),
-    loadGlovesOnTable(scene, collisionObjects)
+    loadCableFibra(scene)
   ])
+
+  // Cargar mesa ANTES que los guantes (para que la mesa esté lista)
+  await loadTable(scene, collisionObjects)
+  
+  // Cargar guantes después de que la mesa esté cargada
+  await loadGlovesOnTable(scene, collisionObjects)
 
   // Inicializar módulos interactivos
   await initCable(scene, rightHandGroup)
