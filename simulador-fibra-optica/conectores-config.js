@@ -71,7 +71,8 @@ export const SCENE_CONFIG = {
 export const MODEL_SCALES = {
   building: { x: 1.8, y: 1.8, z: 1.8 },
   table: { x: 2.2, y: 2.2, z: 2.2 },
-  cableFibra: { x: 0.018, y: 0.018, z: 0.018 }
+  cableFibra: { x: 0.018, y: 0.018, z: 0.018 },
+  cable: { x: 0.05, y: 0.05, z: 0.05 }
 }
 // Rutas de modelos GLB
 export const MODEL_PATHS = {
@@ -79,5 +80,6 @@ export const MODEL_PATHS = {
   table: '/Modelos GLB/metal_table_asset.glb',
   cableFibra: '/Modelos GLB/custom_5g_fiber_cable.glb',
   panelPared: '/Modelos GLB/panelPared.glb',
-  hands: '/Modelos GLB/hand-arm.glb'
+  hands: '/Modelos GLB/hand-arm.glb',
+  cable: '/Modelos GLB/wirewire.glb'
 }
