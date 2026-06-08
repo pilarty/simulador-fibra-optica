@@ -110,7 +110,8 @@ export const MODEL_PATHS = {
   panelPared: '/Modelos GLB/panelPared.glb',
   hands: '/Modelos GLB/hand-arm.glb',
   gloves: '/Modelos GLB/work_gloves.glb',
-  glovedHands: '/Modelos GLB/interlocking_gloved_hands.glb'
+  glovedHands: '/Modelos GLB/interlocking_gloved_hands.glb',
+  singleGlove: '/Modelos GLB/gloves.glb'
 }
 
 // Configuración de física

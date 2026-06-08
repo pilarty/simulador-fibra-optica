@@ -84,64 +84,84 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
     console.log('✓ Mano derecha original ocultada')
   }
 
-  // SOLUCIÓN TEMPORAL: Usar el mismo modelo de manos pero con color de guantes
-  gltfLoader.load(MODEL_PATHS.hands, (gltf) => {
-    console.log('📦 Usando hand-arm.glb con textura de guantes')
+  // Cargar el modelo de UN SOLO guante y clonarlo para cada mano
+  gltfLoader.load(MODEL_PATHS.singleGlove, (gltf) => {
+    console.log('📦 Cargando modelo gloves.glb (un solo guante)')
     
-    // Función para aplicar material de guantes (color gris/azul)
-    const applyGlovesMaterial = (object) => {
-      object.traverse(child => {
-        if (child.isMesh) {
-          child.castShadow = false
-          child.receiveShadow = false
-          child.frustumCulled = false
-          child.renderOrder = 999
+    const gloveModel = gltf.scene
+    
+    // Configurar materiales igual que las manos para evitar traspaso
+    gloveModel.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = false
+        child.receiveShadow = false
+        child.frustumCulled = false
+        child.renderOrder = 999
 
-          const materials = Array.isArray(child.material) ? child.material : [child.material]
-          materials.forEach((material) => {
-            if (!material) return
-            
-            // Cambiar el color a un tono de guantes (gris azulado)
-            material.color = new THREE.Color(0x4a5f7a) // Color de guantes de trabajo
-            material.transparent = false
-            material.opacity = 1
-            material.depthTest = false
-            material.depthWrite = true
-            material.side = THREE.FrontSide
-            
-            // Hacer más rugoso (menos brillante)
-            if ('roughness' in material) material.roughness = 0.9
-            if ('metalness' in material) material.metalness = 0
-            
-            material.needsUpdate = true
-          })
-        }
-      })
-    }
+        const materials = Array.isArray(child.material) ? child.material : [child.material]
+        materials.forEach((material) => {
+          if (!material) return
+          material.transparent = false
+          material.opacity = 1
+          material.depthTest = false  // Evita traspasar el entorno
+          material.depthWrite = true
+          material.side = THREE.FrontSide
+          material.needsUpdate = true
+        })
+      }
+    })
     
-    // Agregar mano izquierda con apariencia de guante
-    glovesLeftHand = gltf.scene.clone()
+    // Guante izquierdo - usar misma configuración que las manos
+    glovesLeftHand = gloveModel.clone()
     glovesLeftHand.name = 'equippedLeftGlove'
-    glovesLeftHand.scale.set(0.01, 0.01, 0.01)
+    glovesLeftHand.scale.set(1.0, 1.0, 1.0)  // Ajustado para coincidir con manos
     glovesLeftHand.rotation.x = -0.3
     glovesLeftHand.rotation.z = 0.3
-    applyGlovesMaterial(glovesLeftHand)
     leftHandGroup.add(glovesLeftHand)
+    console.log('✓ Guante izquierdo equipado')
 
-    // Agregar mano derecha con apariencia de guante (espejada)
-    glovesRightHand = gltf.scene.clone()
+    // Guante derecho - espejar en X
+    glovesRightHand = gloveModel.clone()
     glovesRightHand.name = 'equippedRightGlove'
-    glovesRightHand.scale.set(-0.01, 0.01, 0.01)
+    glovesRightHand.scale.set(-1.0, 1.0, 1.0)  // Espejado en X, ajustado para coincidir
     glovesRightHand.rotation.x = -0.3
     glovesRightHand.rotation.z = -0.3
-    applyGlovesMaterial(glovesRightHand)
     rightHandGroup.add(glovesRightHand)
+    console.log('✓ Guante derecho equipado (espejado)')
     
     isWearingGloves = true
     if (glovesModelOnTable) glovesModelOnTable.visible = false
-    console.log('✓ Guantes equipados correctamente (material aplicado)')
+    console.log('✓ Guantes equipados correctamente')
+    
+    // DEBUG: Agregar control de teclado para alternar visibilidad y comparar
+    console.log('🔍 DEBUG: Presiona la tecla "G" para alternar entre manos y guantes')
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyG') {
+        if (!glovesLeftHand || !glovesRightHand) return
+        
+        const leftHandOriginal = originalLeftHandGroup.getObjectByName('originalLeftHand')
+        const rightHandOriginal = originalRightHandGroup.getObjectByName('originalRightHand')
+        
+        // Alternar visibilidad
+        if (glovesLeftHand.visible) {
+          // Mostrar manos originales, ocultar guantes
+          glovesLeftHand.visible = false
+          glovesRightHand.visible = false
+          if (leftHandOriginal) leftHandOriginal.visible = true
+          if (rightHandOriginal) rightHandOriginal.visible = true
+          console.log('👋 Mostrando MANOS originales')
+        } else {
+          // Mostrar guantes, ocultar manos
+          glovesLeftHand.visible = true
+          glovesRightHand.visible = true
+          if (leftHandOriginal) leftHandOriginal.visible = false
+          if (rightHandOriginal) rightHandOriginal.visible = false
+          console.log('🧤 Mostrando GUANTES')
+        }
+      }
+    })
   }, undefined, (error) => {
-    console.error('✗ Error cargando manos con guantes:', error)
+    console.error('✗ Error cargando guantes:', error)
   })
 }
 
