@@ -114,22 +114,22 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
     // Guante izquierdo - usar misma configuración que las manos
     glovesLeftHand = gloveModel.clone()
     glovesLeftHand.name = 'equippedLeftGlove'
-    glovesLeftHand.scale.set(1.0, 1.0, 1.0)  // Ajustado para coincidir con manos
-    glovesLeftHand.position.set(-0.2, -0.4, 0.4)  // Más centrado y adelante (Z+)
+    glovesLeftHand.scale.set(1.0, 1.0, 1.0)
+    glovesLeftHand.position.set(-0.25, -0.5, -0.1)  // Separado, más bajo, ligeramente alejado
     glovesLeftHand.rotation.x = -0.3
-    glovesLeftHand.rotation.y = -0.2  // Dorso sutil
-    glovesLeftHand.rotation.z = 0.4   // Menos inclinado
+    glovesLeftHand.rotation.y = -0.15  // Dorso visible (negativo)
+    glovesLeftHand.rotation.z = 0.3    // Inclinación natural
     leftHandGroup.add(glovesLeftHand)
     console.log('✓ Guante izquierdo equipado')
 
     // Guante derecho - espejar en X
     glovesRightHand = gloveModel.clone()
     glovesRightHand.name = 'equippedRightGlove'
-    glovesRightHand.scale.set(-1.0, 1.0, 1.0)  // Espejado en X, ajustado para coincidir
-    glovesRightHand.position.set(0.2, -0.4, 0.4)   // Más centrado y adelante (Z+)
+    glovesRightHand.scale.set(-1.0, 1.0, 1.0)
+    glovesRightHand.position.set(0.25, -0.5, -0.1)   // Separado, más bajo, ligeramente alejado
     glovesRightHand.rotation.x = -0.3
-    glovesRightHand.rotation.y = 0.2   // Dorso sutil
-    glovesRightHand.rotation.z = -0.4  // Menos inclinado
+    glovesRightHand.rotation.y = 0.15   // Dorso visible (positivo por espejo)
+    glovesRightHand.rotation.z = -0.3   // Inclinación natural
     rightHandGroup.add(glovesRightHand)
     console.log('✓ Guante derecho equipado (espejado)')
     
