@@ -19,8 +19,8 @@ export function loadPliersOnTable(scene, interactableObjects) {
       pliersModel = gltf.scene.clone()
       
       // Posicionar sobre la mesa (ajustar según necesidad)
-      pliersModel.position.set(1, 33.13, -12.5)
-      pliersModel.scale.set(0.3, 0.3, 0.3)
+      pliersModel.position.set(1, 33.13, -13.5)
+      pliersModel.scale.set(0.075, 0.075, 0.075)
       pliersModel.rotation.set(0, Math.PI / 4, 0)
       
       // Configurar material para visibilidad
@@ -60,8 +60,8 @@ export function loadToolsPackOnTable(scene, interactableObjects) {
       toolsPackModel = gltf.scene.clone()
       
       // Posicionar sobre la mesa (ajustar según necesidad)
-      toolsPackModel.position.set(3, 33.13, -12.5)
-      toolsPackModel.scale.set(0.5, 0.5, 0.5)
+      toolsPackModel.position.set(3.1, 33.13, -13.2)
+      toolsPackModel.scale.set(0.02, 0.02, 0.02)
       toolsPackModel.rotation.set(0, 0, 0)
       
       // Configurar material para visibilidad
