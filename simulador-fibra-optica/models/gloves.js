@@ -21,11 +21,11 @@ let originalRightHandGroup = null
  */
 export function loadGlovesOnTable(scene, interactableObjects) {
   return new Promise((resolve) => {
-    gltfLoader.load(MODEL_PATHS.gloves, (gltf) => {
+    gltfLoader.load(MODEL_PATHS.singleGlove, (gltf) => {
       glovesModelOnTable = gltf.scene.clone()
       
       // Posicionar sobre la mesa (mesa está en 2, 31.57, -13)
-      glovesModelOnTable.position.set(2, 34.12, -13)
+      glovesModelOnTable.position.set(2, 33.13, -13)
       glovesModelOnTable.scale.set(0.01, 0.01, 0.01)
       glovesModelOnTable.rotation.y = Math.PI
       
