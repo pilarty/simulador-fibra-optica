@@ -1,8 +1,12 @@
 import * as THREE from 'three'
-import { setupAllModels } from './models/index.js'
 import { STEPS, PHYSICS, LIGHTING, SCENE_CONFIG, MODEL_SCALES, TOOL_COLORS } from './conectores-config.js'
-import { updateCable, checkHandNearCable } from './models/cable.js'
-import { checkHandNearPanel, swapPanelElectrico } from './models/panelElectrico.js'
+import { loadBuilding } from './models/building.js'
+import { loadTable } from './models/table.js'
+import { loadCableFibra } from './models/cable-fibra.js'
+import { loadHands } from './models/hands.js'
+import { loadGlovesOnTable, equipGloves, unequipGloves, getIsWearingGloves, getGlovesModel } from './models/gloves.js'
+import { initCable, updateCable, checkHandNearCable, agarrarCable, soltarCable, mostrarCable } from './models/cable.js'
+import { initPanelElectrico, checkHandNearPanel, swapPanelElectrico } from './models/panelElectrico.js'
 
 // ─────────────────────────────────────────────
 // THREE.JS — Escena 3D
@@ -136,13 +140,37 @@ const wallVisuals = []
 let equipGlovesFunc = null
 let getGlovesModelFunc = null
 
-// Promesas de carga de modelos
-setupAllModels(scene, leftHandGroup, rightHandGroup, collisionObjects).then((modelFuncs) => {
+// ═══════════════════════════════════════════════════════════════
+// CARGA DE MODELOS - Sin usar index.js (compatibilidad con main)
+// ═══════════════════════════════════════════════════════════════
+
+async function setupAllModels() {
+  console.log('📦 Iniciando carga de modelos...')
+
+  // Priorizar manos para mostrar feedback visual rápido al iniciar.
+  await loadHands(scene, leftHandGroup, rightHandGroup)
+
+  // Cargar building y cable fibra en paralelo
+  await Promise.all([
+    loadBuilding(scene, collisionObjects),
+    loadCableFibra(scene)
+  ])
+
+  // Cargar mesa ANTES que los guantes (para que la mesa esté lista)
+  await loadTable(scene, collisionObjects)
+  
+  // Cargar guantes después de que la mesa esté cargada
+  await loadGlovesOnTable(scene, collisionObjects)
+
+  // Inicializar módulos interactivos
+  await initCable(scene, rightHandGroup)
+  await initPanelElectrico(scene)
+
   console.log('✓ Todos los modelos cargados exitosamente')
   
-  // Guardar función de equipar guantes y obtener modelo
-  equipGlovesFunc = modelFuncs.equipGloves
-  getGlovesModelFunc = modelFuncs.getGlovesModel
+  // Guardar funciones de guantes globalmente
+  equipGlovesFunc = () => equipGloves(leftHandGroup, rightHandGroup)
+  getGlovesModelFunc = getGlovesModel
   
   // Crear paredes personalizadas con collisión
   function createWall(minX, maxX, minY, maxY, minZ, maxZ) {
@@ -180,7 +208,10 @@ setupAllModels(scene, leftHandGroup, rightHandGroup, collisionObjects).then((mod
   
   // Crear helpers para objetos interactuables
   createInteractableHelpers()
-})
+}
+
+// Ejecutar carga de modelos
+setupAllModels()
 
 // Función para crear BoxHelpers para objetos interactuables
 function createInteractableHelpers() {
