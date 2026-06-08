@@ -84,5 +84,7 @@ export const MODEL_PATHS = {
   cable: '/Modelos GLB/wirewire.glb',
   gloves: '/Modelos GLB/work_gloves.glb',
   glovedHands: '/Modelos GLB/interlocking_gloved_hands.glb',
-  singleGlove: '/Modelos GLB/gloves.glb'
+  singleGlove: '/Modelos GLB/gloves.glb',
+  pliers: '/Modelos GLB/pliers.glb',
+  toolsPack: '/Modelos GLB/tools_pack._free.glb'
 }

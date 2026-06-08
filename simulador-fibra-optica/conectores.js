@@ -7,6 +7,7 @@ import { loadHands } from './models/hands.js'
 import { loadGlovesOnTable, equipGloves, unequipGloves, getIsWearingGloves } from './models/gloves.js'
 import { checkHandNearPanel, initPanelElectrico, swapPanelElectrico } from './models/panelElectrico.js'
 import { loadTable } from './models/table.js'
+import { loadPliersOnTable, loadToolsPackOnTable } from './models/tools.js'
 
 // ─────────────────────────────────────────────
 // RENDERER Y ESCENA
@@ -125,7 +126,9 @@ Promise.all([
   loadTable(scene, collisionObjects),
   loadCableFibra(scene),
   loadHands(scene, leftHandGroup, rightHandGroup),
-  loadGlovesOnTable(scene, collisionObjects)
+  loadGlovesOnTable(scene, collisionObjects),
+  loadPliersOnTable(scene, collisionObjects),
+  loadToolsPackOnTable(scene, collisionObjects)
 ]).then(async () => {
   await initCable(scene)
   await initPanelElectrico(scene)
