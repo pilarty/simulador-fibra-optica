@@ -115,9 +115,10 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
     glovesLeftHand = gloveModel.clone()
     glovesLeftHand.name = 'equippedLeftGlove'
     glovesLeftHand.scale.set(1.0, 1.0, 1.0)  // Ajustado para coincidir con manos
-    glovesLeftHand.position.set(-0.35, -0.4, 0)  // Más separado a la izquierda
+    glovesLeftHand.position.set(-0.2, -0.4, 0.4)  // Más centrado y adelante (Z+)
     glovesLeftHand.rotation.x = -0.3
-    glovesLeftHand.rotation.z = 0.5  // Más rotado hacia afuera
+    glovesLeftHand.rotation.y = -0.2  // Dorso sutil
+    glovesLeftHand.rotation.z = 0.4   // Menos inclinado
     leftHandGroup.add(glovesLeftHand)
     console.log('✓ Guante izquierdo equipado')
 
@@ -125,9 +126,10 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
     glovesRightHand = gloveModel.clone()
     glovesRightHand.name = 'equippedRightGlove'
     glovesRightHand.scale.set(-1.0, 1.0, 1.0)  // Espejado en X, ajustado para coincidir
-    glovesRightHand.position.set(0.35, -0.4, 0)  // Más separado a la derecha
+    glovesRightHand.position.set(0.2, -0.4, 0.4)   // Más centrado y adelante (Z+)
     glovesRightHand.rotation.x = -0.3
-    glovesRightHand.rotation.z = -0.5  // Más rotado hacia afuera
+    glovesRightHand.rotation.y = 0.2   // Dorso sutil
+    glovesRightHand.rotation.z = -0.4  // Menos inclinado
     rightHandGroup.add(glovesRightHand)
     console.log('✓ Guante derecho equipado (espejado)')
     
