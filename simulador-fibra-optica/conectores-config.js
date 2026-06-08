@@ -111,7 +111,8 @@ export const MODEL_PATHS = {
   hands: '/Modelos GLB/hand-arm.glb',
   gloves: '/Modelos GLB/work_gloves.glb',
   glovedHands: '/Modelos GLB/interlocking_gloved_hands.glb',
-  singleGlove: '/Modelos GLB/gloves.glb'
+  singleGlove: '/Modelos GLB/gloves.glb',
+  cable: '/Modelos GLB/wirewire.glb'
 }
 
 // Configuración de física
