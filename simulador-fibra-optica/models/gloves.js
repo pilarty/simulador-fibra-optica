@@ -136,34 +136,6 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
     isWearingGloves = true
     if (glovesModelOnTable) glovesModelOnTable.visible = false
     console.log('✓ Guantes equipados correctamente')
-    
-    // DEBUG: Agregar control de teclado para alternar visibilidad y comparar
-    console.log('🔍 DEBUG: Presiona la tecla "G" para alternar entre manos y guantes')
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'KeyG') {
-        if (!glovesLeftHand || !glovesRightHand) return
-        
-        const leftHandOriginal = originalLeftHandGroup.getObjectByName('originalLeftHand')
-        const rightHandOriginal = originalRightHandGroup.getObjectByName('originalRightHand')
-        
-        // Alternar visibilidad
-        if (glovesLeftHand.visible) {
-          // Mostrar manos originales, ocultar guantes
-          glovesLeftHand.visible = false
-          glovesRightHand.visible = false
-          if (leftHandOriginal) leftHandOriginal.visible = true
-          if (rightHandOriginal) rightHandOriginal.visible = true
-          console.log('👋 Mostrando MANOS originales')
-        } else {
-          // Mostrar guantes, ocultar manos
-          glovesLeftHand.visible = true
-          glovesRightHand.visible = true
-          if (leftHandOriginal) leftHandOriginal.visible = false
-          if (rightHandOriginal) rightHandOriginal.visible = false
-          console.log('🧤 Mostrando GUANTES')
-        }
-      }
-    })
   }, undefined, (error) => {
     console.error('✗ Error cargando guantes:', error)
   })
