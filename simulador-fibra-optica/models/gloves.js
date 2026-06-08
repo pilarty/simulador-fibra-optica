@@ -22,15 +22,18 @@ let originalRightHandGroup = null
 export function loadGlovesOnTable(scene, interactableObjects) {
   return new Promise((resolve) => {
     gltfLoader.load(MODEL_PATHS.singleGlove, (gltf) => {
-      glovesModelOnTable = gltf.scene.clone()
+      // Crear grupo para contener ambos guantes
+      glovesModelOnTable = new THREE.Group()
+      glovesModelOnTable.name = 'glovesOnTable'
       
-      // Posicionar sobre la mesa (mesa está en 2, 31.57, -13)
-      glovesModelOnTable.position.set(2, 33.13, -13)
-      glovesModelOnTable.scale.set(0.01, 0.01, 0.01)
-      glovesModelOnTable.rotation.y = Math.PI
+      // Guante izquierdo
+      const leftGlove = gltf.scene.clone()
+      leftGlove.position.set(-0.3, 0.05, -0.3)  // Más separado, ligeramente elevado
+      leftGlove.scale.set(1.0, 1.0, 1.0)
+      leftGlove.rotation.set(Math.PI / 2, 0, 0)  // Acostado en X (palma hacia arriba)
       
-      // Configurar material para visibilidad
-      glovesModelOnTable.traverse(child => {
+      // Configurar materiales del guante izquierdo
+      leftGlove.traverse(child => {
         if (child.isMesh) {
           child.castShadow = true
           child.receiveShadow = true
@@ -44,9 +47,38 @@ export function loadGlovesOnTable(scene, interactableObjects) {
         }
       })
       
+      // Guante derecho (espejado)
+      const rightGlove = gltf.scene.clone()
+      rightGlove.position.set(0.3, 0.05, -0.3)  // Más separado, ligeramente elevado
+      rightGlove.scale.set(-1.0, 1.0, 1.0)  // Espejado en X
+      rightGlove.rotation.set(Math.PI / 2, 0, 0)  // Acostado en X (palma hacia arriba)
+      
+      // Configurar materiales del guante derecho
+      rightGlove.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true
+          child.receiveShadow = true
+          
+          // Marcar como interactuable
+          child.userData.isGloves = true
+          child.userData.interactable = true
+          
+          // Agregar al array de objetos interactuables
+          interactableObjects.push(child)
+        }
+      })
+      
+      // Agregar guantes al grupo
+      glovesModelOnTable.add(leftGlove)
+      glovesModelOnTable.add(rightGlove)
+      
+      // Posicionar el grupo sobre la mesa (mesa está en 2, 31.57, -13)
+      glovesModelOnTable.position.set(2, 33.13, -13)
+      
       scene.add(glovesModelOnTable)
-      console.log('✓ Guantes cargados sobre la mesa')
+      console.log('✓ Par de guantes cargados sobre la mesa')
       console.log(`   Posición: X=${glovesModelOnTable.position.x}, Y=${glovesModelOnTable.position.y}, Z=${glovesModelOnTable.position.z}`)
+      console.log(`   Guantes en grupo: ${glovesModelOnTable.children.length}`)
       console.log(`   Meshes interactuables: ${interactableObjects.length}`)
       resolve()
     }, undefined, (error) => {
@@ -115,7 +147,7 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
     glovesLeftHand = gloveModel.clone()
     glovesLeftHand.name = 'equippedLeftGlove'
     glovesLeftHand.scale.set(1.0, 1.0, 1.0)
-    glovesLeftHand.position.set(-0.25, -0.5, -0.1)  // Separado, más bajo, ligeramente alejado
+    glovesLeftHand.position.set(-0.70, -0.5, -0.1)  // Separado, más bajo, ligeramente alejado
     glovesLeftHand.rotation.x = -0.3
     glovesLeftHand.rotation.y = -0.15  // Dorso visible (negativo)
     glovesLeftHand.rotation.z = 0.3    // Inclinación natural
@@ -126,7 +158,7 @@ export function equipGloves(leftHandGroup, rightHandGroup) {
     glovesRightHand = gloveModel.clone()
     glovesRightHand.name = 'equippedRightGlove'
     glovesRightHand.scale.set(-1.0, 1.0, 1.0)
-    glovesRightHand.position.set(0.25, -0.5, -0.1)   // Separado, más bajo, ligeramente alejado
+    glovesRightHand.position.set(0.70, -0.5, -0.1)   // Separado, más bajo, ligeramente alejado
     glovesRightHand.rotation.x = -0.3
     glovesRightHand.rotation.y = 0.15   // Dorso visible (positivo por espejo)
     glovesRightHand.rotation.z = -0.3   // Inclinación natural
